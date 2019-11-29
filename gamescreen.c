@@ -36,6 +36,6 @@ int main()
 		}
 	}
 	refresh();
-	sleep(10);
+	sleep(9);
 	endwin();
 }

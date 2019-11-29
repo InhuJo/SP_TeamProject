@@ -6,82 +6,122 @@
 #include <locale.h>
 #include <termios.h>
 #include <fcntl.h>
+#include <signal.h>
 
 #define LEFTEDGE 0
 #define RIGHTEDGE 78
 #define TOPEDGE 0
-#define BOTTOMEDGE 24
+#define DOWNEDGE 22
 
-typedef enum DIRECT 
-{ TOP, LEFT_TOP, LEFT_DOWN, DOWN, RIGHT_DOWN, RIGHT_TOP } DIRECT;
+typedef enum DIRECT_BALL
+{ TOP, RIGHT_TOP, RIGHT_DOWN, DOWN, LEFT_DOWN, LEFT_TOP } DIRECT_BALL;
+
+typedef enum DIRECT_BAR
+{ LEFT, RIGHT } DIRECT_BAR;
 
 typedef struct Ball
 {
+	int ready;
 	int HP;
 	int x, y;
-	DIRECT direct;
+	DIRECT_BALL direct;
 }Ball;
 
 typedef struct Bar
 {
-	int x[3];
+	int x[7];
 	int y;
+	DIRECT_BAR direct;
+
 }Bar;
 
-void initball();
-void update();
+/* function and variable for ball */
+Ball ball;
+void init_ball();
+void update_ball();
+int check_edge(int, int);
+int status[4][6] ={
+	{ 3, 2, -1, -1, -1, 4 },
+	{ -1, 5, 4, -1, -1, -1 },
+	{ -1, -1, 1, 0, 5, -1 },
+	{ -1, -1, -1, -1, 2, 1} };
+
+/* function and variable for bar */
+Bar bar;
+void init_bar();
+void update_bar();
+
 void set_crmode(void);
 void set_nodelay_mode(void);
 void tty_mode(int);
 int set_ticker(int n_msecs);
-char blank[] = "  ";
-Ball ball;
+char *blank = " ";
 
 int main()
 {
 	int input;
 
 	setlocale(LC_ALL, "");
-	
-	/*tty_mode(0);
+
+	tty_mode(0);
 	set_crmode();
-	set_nodelay_mode();*/
+	set_nodelay_mode();
 
 	initscr();
 	clear();
 
-	initball();
+	init_ball();
+	init_bar();
 
-	//set_ticker(500);
+	signal(SIGALRM, update_ball);
+
+	if(set_ticker(70) == -1)
+		perror("set_ticker");
 
 	move(ball.y, ball.x);
 	addstr("●");
+
+	while((input = getchar()) != 'q')
+	{
+		if(input == '1')
+		{
+			ball.ready = 1;
+			ball.direct = TOP;
+		}
+		else if(input == '2')
+		{
+			ball.ready = 1;
+			ball.direct = RIGHT_TOP;
+		}
+		else if(input == '3')
+		{
+			ball.ready = 1;
+			ball.direct = LEFT_TOP;
+		}
+	}
+
+	/*for(int i = 0; i < 7; i++)
+	{
+		move(bar.y, bar.x[i]);
+		addstr("■");
+	}
 	move(LINES-1, COLS-1);
 	refresh();
 
-/*	while(1)
+	while((input = getchar()) != 'q')
 	{
-		input = getchar();
-
 		switch(input)
 		{
-			case '0':
+			case 'a':
+				bar.direct = LEFT;
+				update_bar();
 				break;
-			case '1':
-				break;
-			case '2':
-				break;
-			case '3':
-				break;
-			case '4':
-				break;
-			case '5':
-				break;
-			case '6':
+			case 'd':
+				bar.direct = RIGHT;
+				update_bar();
 				break;
 		}
 	}*/
-	getch();
 
 	endwin();
 	tty_mode(1);
@@ -89,56 +129,158 @@ int main()
 	return 0;
 }
 
-void initball()
+void init_ball()
 {
-	ball.x = 38;
-	ball.y = 12;
+	ball.ready = 0;
+	ball.HP = 3;
+	ball.x = 33;
+	ball.y = 21;
 	ball.direct = TOP;
 }
 
-/*void update()
+void update_ball()
 {
-	clock_t curTime = clock();
+	move(ball.y, ball.x);
+	addstr(blank);
 
-	if(curTime - ball.oldTime > ball.moveTime)
-	{
-		ball.oldTime = curTime;
-
+	if(ball.ready == 1)
+	{	
 		switch(ball.direct)
 		{
 			case TOP:
-				ball.y--;
-				break;
-			case LEFT_TOP:
-				ball.x++;
-				ball.y--;
-				break;
-			case LEFT_DOWN:
-				ball.x++;
-				ball.y++;
-				break;
-			case DOWN:
-				ball.y++;
-				break;
-			case RIGHT_DOWN:
-				ball.x--;
-				ball.y++;
+				if(check_edge(ball.x, ball.y - 1) == 0)
+					ball.y--;
 				break;
 			case RIGHT_TOP:
-				ball.x--;
-				ball.y--;
+				if(!check_edge(ball.x + 1, ball.y - 1))
+				{
+					ball.x++;
+					ball.y--;
+				}
+				break;
+			case RIGHT_DOWN:
+				if(!check_edge(ball.x + 1, ball.y + 1))
+				{
+					ball.x++;
+					ball.y++;
+				}
+				break;
+			case DOWN:
+				if(check_edge(ball.x, ball.y + 1) == 0)
+					ball.y++;
+				break;
+			case LEFT_DOWN:
+				if(!check_edge(ball.x - 1, ball.y + 1))
+				{
+					ball.x--;
+					ball.y++;
+				}
+				break;
+			case LEFT_TOP:
+				if(!check_edge(ball.x - 1, ball.y  - 1))
+				{
+					ball.x--;
+					ball.y--;
+				}
 				break;
 		}
 	}
 
-	if(ball.x < 0 || ball.x > 78 || ball.y > 24 || ball.y < 0)
-	{
-		ball.x = 38;
-		ball.y = 12;
-		ball.direct = TOP;
-	}
+	move(ball.y, ball.x);
+	addstr("●");
+	move(LINES-1, 0);
+	refresh();
 }
-*/
+
+int check_edge(int x, int y)
+{
+	if(y < TOPEDGE)
+	{
+		ball.direct = status[0][ball.direct];
+		return 1;
+	}
+
+	if(x > RIGHTEDGE)
+	{
+		ball.direct = status[1][ball.direct];
+		return 1;
+	}
+
+	if(y > DOWNEDGE)
+	{
+		ball.direct = status[2][ball.direct];
+		return 1;
+	}
+
+	if(x < LEFTEDGE)
+	{
+		ball.direct = status[3][ball.direct];
+		return 1;
+	}
+
+	return 0;
+}
+
+void init_bar()
+{
+	bar.x[0] = 30;
+	bar.x[1] = 31;
+	bar.x[2] = 32;
+	bar.x[3] = 33;
+	bar.x[4] = 34;
+	bar.x[5] = 35;
+	bar.x[6] = 36;
+	bar.y = 22;
+}
+
+void update_bar()
+{
+	int i;
+
+	if(bar.direct == LEFT)
+	{
+		/* check edge of leftmost bar */
+		if(bar.x[0] - 1 >= LEFTEDGE)
+		{
+			/* remove previous bar */
+			for(i = 0; i < 7; i++)
+			{
+				move(bar.y, bar.x[i]);
+				addstr(blank);
+			}
+
+			/* draw new bar */
+			for(i = 0; i < 7; i++)
+			{
+				move(bar.y, --bar.x[i]);
+				addstr("■");
+			}
+		}
+	}
+	else if(bar.direct == RIGHT)
+	{
+		/* check edge of rightmost bar */
+		if(bar.x[6] + 1 <= RIGHTEDGE)
+		{
+			/* remove previous bar */
+			for(i = 0; i < 7; i++)
+			{
+				move(bar.y, bar.x[i]);
+				addstr(blank);
+			}
+
+			/* draw new bar */
+			for(i = 0; i < 7; i++)
+			{
+				move(bar.y, ++bar.x[i]);
+				addstr("■");
+			}
+		}
+	}
+	move(LINES-1, 0);
+	refresh();
+}			
+
 void set_crmode()
 {
 	struct termios ttystate;

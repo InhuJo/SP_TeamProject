@@ -1,8 +1,10 @@
 #include <stdio.h>
-#include <curses.h>
+//#include <ncursesw/curses.h>
+#include <ncurses.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <termios.h>
+#include <locale.h>
 
 void tty_mode(int);
 void set_nodelay_mode(void);
@@ -10,6 +12,7 @@ void set_crmode(void);
 
 int main(void)
 {
+	setlocale(LC_ALL,"");
 	tty_mode(0);
 	set_nodelay_mode();
 	set_crmode();
@@ -19,34 +22,56 @@ int main(void)
 
 	initscr();
 	clear();
-	for(i = 50 ; i< 80; i= i+10)
+	keypad(stdscr, TRUE);
+	for(i = 30 ; i< 70; i= i+10)
 	{
 		move(10,i);
 		addstr("GAME START  ");
 	}
-	move(40, 65);
+	move(15,55);
 	standout();
-	addstr("Game START");
-	move(50,65);
+	addstr("GAME START");
+	move(16,55);
 	standend();
-	addstr("Game End");
+	addstr("game end");
+	move(LINES-1,0);
 	while(1)
 	{
-		input = getchar();
-		if(input == 'u')
+		input = getch();
+		if(input == 'j')
 		{
-			move(50,65);
+			mvdelch(15,55);
+			standend();
+			addstr("game start");
+			move(16,55);
 			standout();
+			addstr("GAME END");
 		}
-		else if(input == 'k')
+		if(input == 'u' )
+		{
+			mvdelch(16,55);
+			standend();
+			addstr("game end");
+			move(15,55);
+			standout();
+			addstr("GAME START");
+		}
+		else if(input == '\n')
 		{
 			break;
 		}
 	}
 	refresh();
-	endwin();
-	sleep(3);
 
+	//initscr();
+	clear();
+	move(30,20);
+	addstr("오쥬이누아이라브유♥");
+	move(LINES-1,0);
+	refresh();
+	sleep(2);
+	tty_mode(1);
+	endwin();
 	return 0;
 }
 

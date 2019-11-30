@@ -54,12 +54,13 @@ Bar bar;
 void init_bar();
 void update_bar();
 
-
 void set_crmode(void);
 void set_nodelay_mode(void);
 void tty_mode(int);
 int set_ticker(int n_msecs);
+
 char *blank = " ";
+int game_status = 1;
 
 int main()
 {
@@ -72,6 +73,64 @@ int main()
 	set_nodelay_mode();
 
 	initscr();
+	clear();
+
+	move(10, 31);
+	addstr("BREAKOUT GAME!");
+	
+	move(15, 33);
+	standout();
+	addstr("GAME START");
+	
+	move(16, 34);
+	standend();
+	addstr("GAME END");
+
+	move(LINES - 1, 0);
+
+	while(1)
+	{
+		input = getchar();
+
+		if(input == 's')
+		{
+			mvdelch(15, 33);
+			standend();
+			addstr("GAME START");
+
+			move(16, 34);
+			standout();
+			addstr("GAME END");
+
+			game_status = 0;
+		}
+		else if(input == 'w')
+		{
+			mvdelch(16, 34);
+			standend();
+			addstr("GAME END");
+
+			move(15, 33);
+			standout();
+			addstr("GAME START");
+
+			game_status = 1;
+		}
+		else if(input == 'f')
+			break;
+
+		move(LINES - 1, COLS - 1);
+		refresh();
+	}
+
+	if(game_status == 0)
+	{
+		endwin();
+		tty_mode(1);
+
+		return 0;
+	}
+
 	clear();
 
 	init_ball();

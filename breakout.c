@@ -35,21 +35,25 @@ typedef struct Bar
 
 }Bar;
 
-/* function and variable for ball */
-Ball ball;
-void init_ball();
-void update_ball();
-int check_edge(int, int);
-int status[4][6] ={
+int ball_status[4][6] = {
 	{ 3, 2, -1, -1, -1, 4 },
 	{ -1, 5, 4, -1, -1, -1 },
 	{ -1, -1, 1, 0, 5, -1 },
 	{ -1, -1, -1, -1, 2, 1} };
 
+int block_status[6] = { 3, 2, 1, 0, 5, 4 };
+
+/* function and variable for ball */
+Ball ball;
+void init_ball();
+void update_ball();
+int check_collision(int, int);
+
 /* function and variable for bar */
 Bar bar;
 void init_bar();
 void update_bar();
+
 
 void set_crmode(void);
 void set_nodelay_mode(void);
@@ -81,37 +85,29 @@ int main()
 	move(ball.y, ball.x);
 	addstr("●");
 
-	while((input = getchar()) != 'q')
-	{
-		if(input == '1')
-		{
-			ball.ready = 1;
-			ball.direct = TOP;
-		}
-		else if(input == '2')
-		{
-			ball.ready = 1;
-			ball.direct = RIGHT_TOP;
-		}
-		else if(input == '3')
-		{
-			ball.ready = 1;
-			ball.direct = LEFT_TOP;
-		}
-	}
-
-	/*for(int i = 0; i < 7; i++)
+	for(int i = 0; i < 7; i++)
 	{
 		move(bar.y, bar.x[i]);
 		addstr("■");
 	}
-	move(LINES-1, COLS-1);
 	refresh();
 
 	while((input = getchar()) != 'q')
 	{
 		switch(input)
 		{
+			case '1':
+				ball.ready = 1;
+				ball.direct = TOP;
+				break;
+			case '2':
+				ball.ready = 1;
+				ball.direct = RIGHT_TOP;
+				break;
+			case '3':
+				ball.ready = 1;
+				ball.direct = LEFT_TOP;
+				break;
 			case 'a':
 				bar.direct = LEFT;
 				update_bar();
@@ -121,7 +117,7 @@ int main()
 				update_bar();
 				break;
 		}
-	}*/
+	}
 
 	endwin();
 	tty_mode(1);
@@ -148,36 +144,36 @@ void update_ball()
 		switch(ball.direct)
 		{
 			case TOP:
-				if(check_edge(ball.x, ball.y - 1) == 0)
+				if(check_collision(ball.x, ball.y - 1) == 0)
 					ball.y--;
 				break;
 			case RIGHT_TOP:
-				if(!check_edge(ball.x + 1, ball.y - 1))
+				if(check_collision(ball.x + 1, ball.y - 1) == 0)
 				{
 					ball.x++;
 					ball.y--;
 				}
 				break;
 			case RIGHT_DOWN:
-				if(!check_edge(ball.x + 1, ball.y + 1))
+				if(check_collision(ball.x + 1, ball.y + 1) == 0)
 				{
 					ball.x++;
 					ball.y++;
 				}
 				break;
 			case DOWN:
-				if(check_edge(ball.x, ball.y + 1) == 0)
+				if(check_collision(ball.x, ball.y + 1) == 0)
 					ball.y++;
 				break;
 			case LEFT_DOWN:
-				if(!check_edge(ball.x - 1, ball.y + 1))
+				if(check_collision(ball.x - 1, ball.y + 1) == 0)
 				{
 					ball.x--;
 					ball.y++;
 				}
 				break;
 			case LEFT_TOP:
-				if(!check_edge(ball.x - 1, ball.y  - 1))
+				if(check_collision(ball.x - 1, ball.y  - 1) == 0)
 				{
 					ball.x--;
 					ball.y--;
@@ -192,29 +188,44 @@ void update_ball()
 	refresh();
 }
 
-int check_edge(int x, int y)
+int check_collision(int x, int y)
 {
+	int i;
+
+	for(i = 0; i < 7; i++)
+		if(y == bar.y)
+			if(x >= bar.x[0] && x <= (bar.x[6] + 1) ||
+				((x + 1) >= bar.x[0] && (x + 1) <= (bar.x[6] + 1)))
+			{
+				ball.direct = block_status[ball.direct];
+				return 1;
+			}
+
 	if(y < TOPEDGE)
 	{
-		ball.direct = status[0][ball.direct];
+		ball.direct = ball_status[0][ball.direct];
 		return 1;
 	}
 
 	if(x > RIGHTEDGE)
 	{
-		ball.direct = status[1][ball.direct];
+		ball.direct = ball_status[1][ball.direct];
 		return 1;
 	}
 
 	if(y > DOWNEDGE)
 	{
-		ball.direct = status[2][ball.direct];
-		return 1;
+		ball.ready = 0;
+		ball.HP--;
+		ball.x = bar.x[3];
+		ball.y = bar.y - 1;
+
+		return -1;
 	}
 
 	if(x < LEFTEDGE)
 	{
-		ball.direct = status[3][ball.direct];
+		ball.direct = ball_status[3][ball.direct];
 		return 1;
 	}
 
@@ -255,6 +266,7 @@ void update_bar()
 				move(bar.y, --bar.x[i]);
 				addstr("■");
 			}
+
 		}
 	}
 	else if(bar.direct == RIGHT)
@@ -277,6 +289,17 @@ void update_bar()
 			}
 		}
 	}
+
+	if(ball.ready == 0)
+	{
+		move(ball.y, ball.x);
+		addstr(blank);
+		
+		ball.x = bar.x[3];
+		move(ball.y, ball.x);
+		addstr("●");
+	}
+
 	move(LINES-1, 0);
 	refresh();
 }			

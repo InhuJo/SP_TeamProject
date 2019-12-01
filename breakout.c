@@ -122,6 +122,7 @@ int main()
 		move(LINES - 1, COLS - 1);
 		refresh();
 	}
+	standend();
 
 	if(game_status == 0)
 	{

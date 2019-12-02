@@ -9,7 +9,7 @@
 #define titlerow 4
 #define titlecol 11
 #define menurow 15
-#define menucol 35
+#define menucol 33
 
 void tty_mode(int);
 void set_nodelay_mode(void);
@@ -54,68 +54,7 @@ void start_screen(void)
 {
 	int i;
 	char input;
-	//ㅂ
-	/*for(i = titlerow ; i< titlerow + 5 ; i= i +1 )
-	{
-		move(i,10);
-		attron(COLOR_PAIR(1));
-		addstr("■ ");
-	}
-	move(titlerow+1, titlecol);
-	attron(COLOR_PAIR(1));
-	addstr("■   ");
-	
-	move(titlerow+4, titlecol);
-	attron(COLOR_PAIR(1));
-	addstr("    ");
-	
-	for(i = titlerow; i<titlerow + 5; i = i +1)
-	{
-		move(i, titlecol +3);
-		attron(COLOR_PAIR(1));
-		addstr("  ");
-	}
-	//ㅕ
-	move(titlerow+1, titlecol+6);
-	attron(COLOR_PAIR(1));
-	addstr("  ");
-
-	move(titlerow+3, titlecol+6);
-	attron(COLOR_PAIR(1));
-	addstr("  ");
-
-	for(i = titlerow; i<titlerow +5 ; i = i+1)
-	{
-		move(i, titlecol+7);
-		attron(COLOR_PAIR(1));
-		addstr("  ");
-	}
-	//ㄱ
-	move(titlerow+6, titlecol-1);
-	attron(COLOR_PAIR(1));
-	addstr("        ");
-
-	for(i = titlerow+6; i < titlerow+8; i = i+1)
-	{
-		move(i, titlecol+7);
-		attron(COLOR_PAIR(1));
-		addstr("  ");
-	}
-	//ㄷ
-	move(titlerow, titlecol + 9);
-	attron(COLOR_PAIR(3));
-	addstr("         ");
-	
-	for(i = titlerow; i < titlerow+2; i = i+1)
-	{
-		move(i, titlecol+9);
-		attron(COLOR_PAIR(3));
-		addstr("  ");
-	}
-
-	move(titlerow+2, titlecol +9);
-	attron(COLOR_PAIR(3));
-	addstr("         ");*/
+	int cnt = 0; //처음에 s눌렀을 때 이동안함 수정위
 
 	//B
 	move(titlerow, titlecol);
@@ -157,7 +96,14 @@ void start_screen(void)
 	attron(COLOR_PAIR(3));
 	addstr("      ");
 
-	
+	move(titlerow+3, titlecol+9);
+	attron(COLOR_PAIR(3));
+	addstr("  ");
+
+	move(titlerow+4, titlecol+10);
+	attron(COLOR_PAIR(3));
+	addstr("  ");
+
 	for(i = titlerow ; i< titlerow+3 ; i = i+1)
 	{
 		move(i, titlecol+10);
@@ -187,71 +133,134 @@ void start_screen(void)
 	for(i = titlerow ; i<titlerow+5; i = i+1)
 	{
 		move(i, titlecol+18);
-		attron(COLOR_PAIR(4));
+		attron(COLOR_PAIR(7));
 		addstr("  ");
-		move(i, titlecol + 23);
-		attron(COLOR_PAIR(4));
+		move(i, titlecol + 22);
+		attron(COLOR_PAIR(7));
 		addstr("  ");
 	}
 	move(titlerow, titlecol+18);
-	attron(COLOR_PAIR(4));
+	attron(COLOR_PAIR(7));
 	addstr("      ");
 	move(titlerow+2, titlecol+18);
-	attron(COLOR_PAIR(4));
+	attron(COLOR_PAIR(7));
 	addstr("      ");
-	
+
 	//K
 	for(i = titlerow; i<titlerow+5; i = i+1)
 	{
-		move(i, titlecol+25);
+		move(i, titlecol+24);
 		attron(COLOR_PAIR(5));
 		addstr("  ");
 	}
-	move(titlerow+2, titlecol+27);
-	attron(COLOR_PAIR(5));
-	addstr("   ");
-
-	move(titlerow+1, titlecol+29);
-	attron(COLOR_PAIR(5));
-	addstr("   ");
-
-	move(titlerow, titlecol+31);
-	attron(COLOR_PAIR(5));
-	addstr("  ");
-	move(titlerow+3, titlecol+29);
-	attron(COLOR_PAIR(5));
-	addstr("   ");
-	move(titlerow+4, titlecol+31);
+	move(titlerow+2, titlecol+26);
 	attron(COLOR_PAIR(5));
 	addstr("  ");
 
+	move(titlerow+1, titlecol+27);
+	attron(COLOR_PAIR(5));
+	addstr("  ");
+
+	move(titlerow, titlecol+28);
+	attron(COLOR_PAIR(5));
+	addstr("   ");
+	move(titlerow+3, titlecol+27);
+	attron(COLOR_PAIR(5));
+	addstr("  ");
+	move(titlerow+4, titlecol+28);
+	attron(COLOR_PAIR(5));
+	addstr("   ");
+
+	//O
+	for(i = titlerow ; i<titlerow+5; i = i+1)
+	{
+		move(i,titlecol+36);
+		attron(COLOR_PAIR(6));
+		addstr("  ");
+		move(i, titlecol+40);
+		attron(COLOR_PAIR(6));
+		addstr("  ");
+	}
+
+	move(titlerow, titlecol+38);
+	attron(COLOR_PAIR(6));
+	addstr("  ");
+	move(titlerow+4, titlecol+38);
+	attron(COLOR_PAIR(6));
+	addstr("  ");
+
+	//U
+	for(i = titlerow; i<titlerow+5; i=i+1)
+	{
+		move(i, titlecol+42);
+		attron(COLOR_PAIR(4));
+		addstr("  ");
+		move(i, titlecol+46);
+		attron(COLOR_PAIR(4));
+		addstr("  ");
+	}
+	move(titlerow+4, titlecol+42);
+	attron(COLOR_PAIR(4));
+	addstr("    ");
+
+
+	//T
+	for(i = titlerow; i < titlerow+5; i = i+1)
+	{
+		move(i, titlecol+50);
+		attron(COLOR_PAIR(2));
+		addstr("  ");
+	}
+	move(titlerow, titlecol+48);
+	attron(COLOR_PAIR(2));
+	addstr("      ");
+
+	//!
+	for(i = titlerow; i<titlerow+3; i = i+1)
+	{
+		move(i, titlecol +55);
+		attron(COLOR_PAIR(3));
+		addstr("  ");
+	}
+	move(titlerow+4, titlecol+55);
+	attron(COLOR_PAIR(3));
+	addstr("  ");
+
+	//game start, game end
 	move(menurow,menucol);
 	standout();
 	addstr("GAME START");
+	
 	move(menurow+1, menucol);
 	standend();
-	addstr("game end");
-	move(LINES-1,0);
+	addstr(" game end");
+	refresh();
+
 	while(1)
 	{
-		input = getch();
-		if(input == 'j')
+		input = getchar();
+		if(input == 's')
 		{
+
 			mvdelch(menurow,menucol);
 			standend();
 			addstr("game start");
 			move(menurow+1,menucol);
 			standout();
-			addstr("GAME END");
+			addstr(" GAME END");
+			refresh();
+
 		}
-		if(input == 'u' )
+
+		if(input == 'w' )
 		{
 			mvdelch(menurow+1,menucol);
 			standend();
-			addstr("game end");
+			addstr(" game end");
 			move(menurow,menucol);
 			standout();
 			addstr("GAME START");
+			refresh();
 		}
 		else if(input == '\n')
 		{

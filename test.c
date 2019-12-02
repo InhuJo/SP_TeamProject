@@ -54,7 +54,7 @@ void start_screen(void)
 {
 	int i;
 	char input;
-	int cnt = 0; //처음에 s눌렀을 때 이동안함 수정위
+	int cnt, cnt2, cnt3; //처음에 s눌렀을 때 이동안함 수정위
 
 	//B
 	move(titlerow, titlecol);
@@ -230,10 +230,15 @@ void start_screen(void)
 	move(menurow,menucol);
 	standout();
 	addstr("GAME START");
-	
-	move(menurow+1, menucol);
+	cnt = menurow;
+
+	move(menurow+2, menucol);
 	standend();
 	addstr(" game end");
+
+	move(menurow+1, menucol);
+	standend();
+	addstr("game rule");
 	refresh();
 
 	while(1)
@@ -241,26 +246,56 @@ void start_screen(void)
 		input = getchar();
 		if(input == 's')
 		{
-
-			mvdelch(menurow,menucol);
-			standend();
-			addstr("game start");
-			move(menurow+1,menucol);
-			standout();
-			addstr(" GAME END");
-			refresh();
+			if(cnt==menurow)
+			{
+				mvdelch(menurow,menucol);
+				standend();
+				addstr("game start");
+				move(menurow+1,menucol);
+				standout();
+				addstr(" GAME RULE");
+				cnt = menurow+1;
+				refresh();
+			}
+			else if(cnt == menurow+1)
+			{
+				mvdelch(menurow+1,menucol);
+				standend();
+				addstr("game rule");
+				move(menurow+2,menucol);
+				standout();
+				addstr(" GAME END");
+				cnt = menurow+2;
+				refresh();
+			}
 
 		}
 
 		if(input == 'w' )
 		{
-			mvdelch(menurow+1,menucol);
-			standend();
-			addstr(" game end");
-			move(menurow,menucol);
-			standout();
-			addstr("GAME START");
-			refresh();
+			if(cnt==menurow+2)
+			{
+				mvdelch(menurow+2,menucol);
+				standend();
+				addstr(" game end");
+				move(menurow+1,menucol);
+				standout();
+				addstr("GAME RULE");
+				cnt = menurow+1;
+				refresh();
+			}
+			else if(cnt == menurow+1)
+			{
+				mvdelch(menurow+1, menucol);
+				standend();
+				addstr(" game rule");
+				move(menurow, menucol);
+				standout();
+				addstr("GAME START");
+				cnt = menurow;
+				refresh();
+			}
+
 		}
 		else if(input == '\n')
 		{

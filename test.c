@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <termios.h>
 #include <locale.h>
+#include <stdlib.h>
 
 #define titlerow 4
 #define titlecol 11
@@ -15,9 +16,13 @@ void tty_mode(int);
 void set_nodelay_mode(void);
 void set_crmode(void);
 void start_screen(void);
+void game_play(void);
+void game_rule(void);
+void game_end(void);
 
 int main(void)
 {
+	int cnt;
 	setlocale(LC_ALL,"");
 	tty_mode(0);
 	set_nodelay_mode();
@@ -25,7 +30,6 @@ int main(void)
 
 	initscr();
 	clear();
-	keypad(stdscr, TRUE);   //키보드 입력
 	start_color(); //터미널에 color를 시작하겠다
 	init_pair(1, COLOR_RED, COLOR_RED);  //글자색과 터미널바탕색 pair를 1로 초기화시킴
 	init_pair(2, COLOR_GREEN, COLOR_GREEN);
@@ -35,9 +39,11 @@ int main(void)
 	init_pair(6, COLOR_CYAN, COLOR_CYAN);
 	init_pair(7, COLOR_WHITE, COLOR_WHITE);
 
-	start_screen();
-
-	refresh();
+	 start_screen();
+	/*clear();
+	if (cnt == menurow+1)
+		game_rule();
+	refresh();*/
 
 	//initscr();
 	clear();
@@ -297,43 +303,88 @@ void start_screen(void)
 			}
 
 		}
-		else if(input == '\n')
+		else if(input == 'l')
 		{
+
+			if(cnt == menurow) //game start
+			{
+				game_play();
+			}
+			else if(cnt == menurow+1)
+				game_rule();
+			else
+				game_end();
 			break;
 		}
 	}
+	//return cnt;
 }
-void set_crmode(void)
-{	
-	struct termios ttystate;
-	tcgetattr(0, &ttystate);
-	ttystate.c_lflag &= ~ICANON;
-	ttystate.c_cc[VMIN] = 1;
-
-	tcsetattr(0, TCSANOW, &ttystate);
-}
-
-void set_nodelay_mode(void)
+void game_play(void)
 {
-	int termflags;
-	termflags = fcntl(0, F_GETFL);
-	termflags |= O_NDELAY;
-	fcntl(0, F_SETFL, termflags);
+	clear();
+	move(LINES/2, COLS/2);
+	addstr("안녕");
+	refresh();
 }
-void tty_mode(int how)
+void game_rule(void)
 {
-	static struct termios original_mode;
-	static int original_flags;
-
-	if(how == 0)
+	clear();
+	char input;
+	move(LINES/2, COLS/2-20);
+	addstr(" 이 게임은 공을 튀기어 벽돌을 깨는 프로그램입니다");
+	move(LINES/2+10, COLS/2);
+	addstr("BACK");
+	refresh();
+	while(1)
 	{
-		tcgetattr(0, &original_mode);
-		original_flags = fcntl(0,F_GETFL);
-	}
-	else 
-	{
-		tcsetattr(0, TCSANOW, &original_mode);
-		original_flags = fcntl(0, F_SETFL, original_flags);
+		input = getchar();
+		if(input == 'l')
+		{
+			clear();
+			start_screen();
+		}
 	}
 }
+void game_end(void)
+{
+	endwin();
+	tty_mode(1);
+	exit(1);
+}
+
+
+
+	void set_crmode(void)
+	{	
+		struct termios ttystate;
+		tcgetattr(0, &ttystate);
+		ttystate.c_lflag &= ~ICANON;
+		ttystate.c_cc[VMIN] = 1;
+
+		tcsetattr(0, TCSANOW, &ttystate);
+	}
+
+	void set_nodelay_mode(void)
+	{
+		int termflags;
+		termflags = fcntl(0, F_GETFL);
+		termflags |= O_NDELAY;
+		fcntl(0, F_SETFL, termflags);
+	}
+	void tty_mode(int how)
+	{
+		static struct termios original_mode;
+		static int original_flags;
+
+		if(how == 0)
+		{
+			tcgetattr(0, &original_mode);
+			original_flags = fcntl(0,F_GETFL);
+		}
+		else 
+		{
+			tcsetattr(0, TCSANOW, &original_mode);
+			original_flags = fcntl(0, F_SETFL, original_flags);
+		}
+	}
 

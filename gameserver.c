@@ -25,7 +25,8 @@ typedef struct result
 }result;
 
 result top[10];
-
+void sort();
+int find(char[] );
 
 int main(int ac, char *av[])
 {
@@ -92,10 +93,11 @@ int main(int ac, char *av[])
 				top[topnum].second = user.second - (top[topnum].minute * 60);
 
 			}
-			write(sock_fd,topnum,sizeof(int));
-			topnum++;
 
-			printf("rank in\n");
+			sort();
+			
+			write(sock_fd,(void *)find(user.name),sizeof(int));
+			topnum++;
 		}
 		else
 		{
@@ -117,7 +119,8 @@ int main(int ac, char *av[])
 						top[i].second = top[i].second -(top[i].minute * 60);
 					}
 
-					printf("rank in\n");
+					write(sock_fd,(void *)i,sizeof(int));
+
 				}
 
 			}
@@ -129,4 +132,36 @@ int main(int ac, char *av[])
 	}
 
 	
+}
+int find(char * name)
+{
+	int i;
+
+	for(i=0;i<topnum;i++)
+	{
+		if(strcmp(top[i].name,name)==0)
+			return i;
+	}
+
+}
+void sort()
+{
+	int i,j,min;
+	result temp;
+
+	for(i=0;i<topnum-1;i++)
+	{
+		min =i;
+
+		for(j=i+1;j<topnum;j++)
+		{
+			if(top[j].minute*60 + top[j].second < top[i].minute*60 + top[i].second)
+				min = j;
+
+		}
+		temp = top[i];
+		top[i] = top[min];
+		top[min] = temp;
+		
+	}
 }

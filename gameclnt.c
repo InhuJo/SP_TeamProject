@@ -38,7 +38,7 @@ int main(int ac, char *av[])
 
 	//random data 
 	//확인용
-	myresult.name = "오주영";
+	strcpy(myresult.name,"오주영");
 	myresult.lifenum = 3;
 	myresult.second = 1000;
 
@@ -70,7 +70,7 @@ int main(int ac, char *av[])
 
 	write(sock_id,(void *)&myresult,sizeof(result));
 
-	messlen = read(sock_id,(void *)top,sizeof((result)*10);	/* read stuff	*/
+	messlen = read(sock_id,(void *)top,sizeof(result)*10);	/* read stuff	*/
 	if ( messlen == -1 )
 		oops( "read" );
 	if( write(1, message, messlen ) != messlen )	/* and write to */

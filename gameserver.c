@@ -74,11 +74,11 @@ int main(int ac, char *av[])
 		if(sock_fd == -1)
 			oops("accept");
 
-		sockfd = fdopen(sock_fd,"r");
+		sock_fd = fdopen(sock_fd,"r");
 		if(sock_fd == NULL)
 			oops("fdopen");
 
-		read(sock_fd,user,sizeof(result));
+		read(sock_fd,(void*)&user,sizeof(result));
 
 		if(topnum<10)
 		{
@@ -88,12 +88,14 @@ int main(int ac, char *av[])
 			top[topnum].lifenum = user.lifenum;
 			if(user.second>=60)
 			{
-				top[topnum].miniute= user.second/60;
-				top[topnum].second = usre.second - (top[topnum].miniute * 60);
+				top[topnum].minute= user.second/60;
+				top[topnum].second = user.second - (top[topnum].minute * 60);
 
 			}
 			write(sock_fd,topnum,sizeof(int));
 			topnum++;
+
+			printf("rank in\n");
 		}
 		else
 		{
@@ -114,16 +116,15 @@ int main(int ac, char *av[])
 						top[i].minute = top[i].second/60;
 						top[i].second = top[i].second -(top[i].minute * 60);
 					}
+
+					printf("rank in\n");
 				}
 
 			}
 
 		}
 
-		thetime = time(NULL);
-
-		fprintf(sock_fp,"the time here is ...");
-		fprintf(sock_fp,"%s", ctime(&thetime));
+	
 		fclose(sock_fp);
 	}
 

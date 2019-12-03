@@ -91,66 +91,6 @@ int main()
 	initscr();
 	clear();
 
-	/*move(10, 31);
-	addstr("BREAKOUT GAME!");
-	
-	move(15, 33);
-	standout();
-	addstr("GAME START");
-	
-	move(16, 34);
-	standend();
-	addstr("GAME END");
-
-	move(LINES - 1, 0);
-
-	while(1)
-	{
-		input = getchar();
-
-		if(input == 's')
-		{
-			mvdelch(15, 33);
-			standend();
-			addstr("GAME START");
-
-			move(16, 34);
-			standout();
-			addstr("GAME END");
-
-			game_status = 0;
-		}
-		else if(input == 'w')
-		{
-			mvdelch(16, 34);
-			standend();
-			addstr("GAME END");
-
-			move(15, 33);
-			standout();
-			addstr("GAME START");
-
-			game_status = 1;
-		}
-		else if(input == 'f')
-			break;
-
-		move(LINES - 1, COLS - 1);
-		refresh();
-	}
-
-	standend();
-
-	if(game_status == 0)
-	{
-		endwin();
-		tty_mode(1);
-
-		return 0;
-	}
-
-	clear();*/
-
 	init_ball();
 	init_bar();
 
@@ -159,8 +99,10 @@ int main()
 	if(set_ticker(70) == -1)
 		perror("set_ticker");
 
-	init_block(BLOCKCOUNT);
+
 	/* init first game screen */
+	init_block(BLOCKCOUNT);
+	
 	for(i = 0; i < BLOCKCOUNT; i++)
 	{
 		move(block[i].y, block[i].x);

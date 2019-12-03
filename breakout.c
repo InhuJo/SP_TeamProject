@@ -1,20 +1,24 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
 #include <ncursesw/curses.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <time.h>
+#include <termios.h>
+#include <locale.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/time.h>
-#include <time.h>
-#include <locale.h>
-#include <termios.h>
-#include <fcntl.h>
 #include <signal.h>
 
+#define titlerow 4
+#define titlecol 11
+#define menurow 15
+#define menucol 33
 #define LEFTEDGE 0
 #define RIGHTEDGE 78
 #define TOPEDGE 0
 #define DOWNEDGE 22
-#define BLOCKCOUNT 70
+#define BLOCKCOUNT 50
 
 typedef enum DIRECT_BALL
 { TOP, RIGHT_TOP, RIGHT_DOWN, DOWN, LEFT_DOWN, LEFT_TOP } DIRECT_BALL;
@@ -54,6 +58,7 @@ int block_status[6] = { 3, 2, 1, 0, 5, 4 };
 
 /* function and variable for ball */
 Ball ball;
+int x_ball;
 void init_ball();
 int update_xball();
 void update_ball();
@@ -66,6 +71,7 @@ void update_bar();
 
 /* function and varibale for block */
 Block block[BLOCKCOUNT];
+int block_count = 0;
 int search(int, int, int);
 void init_block(int);
 
@@ -76,33 +82,264 @@ int set_ticker(int n_msecs);
 
 char *blank = " ";
 int game_status = 1;
-int x_ball;
+void tty_mode(int);
+void set_nodelay_mode(void);
+void set_crmode(void);
+void start_screen(void);
+void game_play(void);
+void game_rule(void);
+void game_end(void);
+void result_screen(void);
 
-int main()
+int main(void)
 {
-	int input, i;
-
-	setlocale(LC_ALL, "");
-
+	setlocale(LC_ALL,"");
 	tty_mode(0);
-	set_crmode();
 	set_nodelay_mode();
+	set_crmode();
 
 	initscr();
 	clear();
+	start_color(); //터미널에 color를 시작하겠다
+	init_pair(1, COLOR_RED, COLOR_RED);  //글자색과 터미널바탕색 pair를 1로 초기화시킴
+	init_pair(2, COLOR_GREEN, COLOR_GREEN);
+	init_pair(3, COLOR_YELLOW, COLOR_YELLOW);
+	init_pair(4, COLOR_BLUE, COLOR_BLUE);
+	init_pair(5, COLOR_MAGENTA, COLOR_MAGENTA);
+	init_pair(6, COLOR_CYAN, COLOR_CYAN);
+	init_pair(7, COLOR_WHITE, COLOR_WHITE);
 
-	/*move(10, 31);
-	addstr("BREAKOUT GAME!");
-	
-	move(15, 33);
+	start_screen();
+
+	if(ball.HP <= 0)
+	{
+		signal(SIGALRM, SIG_IGN);
+		clear();
+		move(titlerow, titlecol);
+		addstr("you lose!");
+		move(titlerow + 1, titlecol);
+		printw("you broke %d blocks", block_count);
+		move(LINES-1, COLS-1);
+		refresh();
+		sleep(3);
+		endwin();
+		
+		tty_mode(1);
+		return 0;
+	}
+	else
+	{
+		signal(SIGALRM, SIG_IGN);
+		result_screen();
+	}
+
+}
+void result_screen(void)
+{
+	clear();
+	move(titlerow, titlecol);
+	addstr("CONGRATULATION!");
+	move(titlerow+1, titlecol);
+	printw("you broke all blocks!");
+	move(LINES-1, COLS-1);
+	refresh();
+	sleep(3);
+	tty_mode(1);
+	endwin();
+}
+
+void start_screen(void)
+{
+	int i;
+	char input;
+	int cnt, cnt2, cnt3; //처음에 s눌렀을 때 이동안함 수정위
+
+	//B
+	move(titlerow, titlecol);
+	attron(COLOR_PAIR(1));
+	addstr("     ");
+
+	move(titlerow+2, titlecol);
+	attron(COLOR_PAIR(1));
+	addstr("     ");
+
+	move(titlerow+4, titlecol);
+	attron(COLOR_PAIR(1));
+	addstr("      ");
+
+	for( i = titlerow; i < titlerow+4; i = i+1)
+	{
+		move(i, titlecol);
+		attron(COLOR_PAIR(1));
+		addstr("  ");
+	}
+	for( i = titlerow; i < titlerow+4; i = i+1)
+	{
+		move(i, titlecol+4);
+		attron(COLOR_PAIR(1));
+		addstr("  ");
+	}
+	//R
+	for(i = titlerow; i < titlerow+5; i = i+1)
+	{
+		move(i, titlecol+6);
+		attron(COLOR_PAIR(3));
+		addstr("  ");
+	}
+
+	move(titlerow, titlecol +6);
+	attron(COLOR_PAIR(3));
+	addstr("     ");
+
+	move(titlerow+2, titlecol+6);
+	attron(COLOR_PAIR(3));
+	addstr("      ");
+
+	move(titlerow+3, titlecol+9);
+	attron(COLOR_PAIR(3));
+	addstr("  ");
+
+	move(titlerow+4, titlecol+10);
+	attron(COLOR_PAIR(3));
+	addstr("  ");
+
+	for(i = titlerow ; i< titlerow+3 ; i = i+1)
+	{
+		move(i, titlecol+10);
+		attron(COLOR_PAIR(3));
+		addstr("  ");
+	}
+	//E
+	for(i = titlerow ; i < titlerow + 5; i = i +1)
+	{
+		move(i, titlecol + 12);
+		attron(COLOR_PAIR(2));
+		addstr("  ");
+	}
+	move(titlerow, titlecol+12);
+	attron(COLOR_PAIR(2));
+	addstr("      ");
+
+	move(titlerow+2, titlecol+12);
+	attron(COLOR_PAIR(2));
+	addstr("      ");
+
+	move(titlerow+4, titlecol+12);
+	attron(COLOR_PAIR(2));
+	addstr("      ");
+
+	//A
+	for(i = titlerow ; i<titlerow+5; i = i+1)
+	{
+		move(i, titlecol+18);
+		attron(COLOR_PAIR(7));
+		addstr("  ");
+		move(i, titlecol + 22);
+		attron(COLOR_PAIR(7));
+		addstr("  ");
+	}
+	move(titlerow, titlecol+18);
+	attron(COLOR_PAIR(7));
+	addstr("      ");
+	move(titlerow+2, titlecol+18);
+	attron(COLOR_PAIR(7));
+	addstr("      ");
+
+	//K
+	for(i = titlerow; i<titlerow+5; i = i+1)
+	{
+		move(i, titlecol+24);
+		attron(COLOR_PAIR(5));
+		addstr("  ");
+	}
+	move(titlerow+2, titlecol+26);
+	attron(COLOR_PAIR(5));
+	addstr("  ");
+
+	move(titlerow+1, titlecol+27);
+	attron(COLOR_PAIR(5));
+	addstr("  ");
+
+	move(titlerow, titlecol+28);
+	attron(COLOR_PAIR(5));
+	addstr("   ");
+	move(titlerow+3, titlecol+27);
+	attron(COLOR_PAIR(5));
+	addstr("  ");
+	move(titlerow+4, titlecol+28);
+	attron(COLOR_PAIR(5));
+	addstr("   ");
+
+	//O
+	for(i = titlerow ; i<titlerow+5; i = i+1)
+	{
+		move(i,titlecol+36);
+		attron(COLOR_PAIR(6));
+		addstr("  ");
+		move(i, titlecol+40);
+		attron(COLOR_PAIR(6));
+		addstr("  ");
+	}
+
+	move(titlerow, titlecol+38);
+	attron(COLOR_PAIR(6));
+	addstr("  ");
+	move(titlerow+4, titlecol+38);
+	attron(COLOR_PAIR(6));
+	addstr("  ");
+
+	//U
+	for(i = titlerow; i<titlerow+5; i=i+1)
+	{
+		move(i, titlecol+42);
+		attron(COLOR_PAIR(4));
+		addstr("  ");
+		move(i, titlecol+46);
+		attron(COLOR_PAIR(4));
+		addstr("  ");
+	}
+	move(titlerow+4, titlecol+42);
+	attron(COLOR_PAIR(4));
+	addstr("    ");
+
+
+	//T
+	for(i = titlerow; i < titlerow+5; i = i+1)
+	{
+		move(i, titlecol+50);
+		attron(COLOR_PAIR(2));
+		addstr("  ");
+	}
+	move(titlerow, titlecol+48);
+	attron(COLOR_PAIR(2));
+	addstr("      ");
+
+	//!
+	for(i = titlerow; i<titlerow+3; i = i+1)
+	{
+		move(i, titlecol +55);
+		attron(COLOR_PAIR(3));
+		addstr("  ");
+	}
+	move(titlerow+4, titlecol+55);
+	attron(COLOR_PAIR(3));
+	addstr("  ");
+
+	//game start, game end
+	move(menurow,menucol);
 	standout();
 	addstr("GAME START");
-	
-	move(16, 34);
-	standend();
-	addstr("GAME END");
+	cnt = menurow;
 
-	move(LINES - 1, 0);
+	move(menurow+2, menucol);
+	standend();
+	addstr(" game end");
+
+	move(menurow+1, menucol);
+	standend();
+	addstr("game rule");
+	move(LINES-1, COLS-1);
+	refresh();
 
 	while(1)
 	{
@@ -110,46 +347,80 @@ int main()
 
 		if(input == 's')
 		{
-			mvdelch(15, 33);
-			standend();
-			addstr("GAME START");
+			if(cnt==menurow)
+			{
+				mvdelch(menurow,menucol);
+				standend();
+				addstr("game start");
+				move(menurow+1,menucol);
+				standout();
+				addstr(" GAME RULE");
+				cnt = menurow+1;
+			}
+			else if(cnt == menurow+1)
+			{
+				mvdelch(menurow+1,menucol);
+				standend();
+				addstr("game rule");
+				move(menurow+2,menucol);
+				standout();
+				addstr(" GAME END");
+				cnt = menurow+2;
+			}
+			move(LINES-1, COLS-1);
+			refresh();
 
-			move(16, 34);
-			standout();
-			addstr("GAME END");
-
-			game_status = 0;
 		}
-		else if(input == 'w')
+
+		if(input == 'w' )
 		{
-			mvdelch(16, 34);
-			standend();
-			addstr("GAME END");
+			if(cnt==menurow+2)
+			{
+				mvdelch(menurow+2,menucol);
+				standend();
+				addstr(" game end");
+				move(menurow+1,menucol);
+				standout();
+				addstr("GAME RULE");
+				cnt = menurow+1;
+			}
+			else if(cnt == menurow+1)
+			{
+				mvdelch(menurow+1, menucol);
+				standend();
+				addstr(" game rule");
+				move(menurow, menucol);
+				standout();
+				addstr("GAME START");
+				cnt = menurow;
+			}
+			move(LINES-1, COLS-1);
+			refresh();
 
-			move(15, 33);
-			standout();
-			addstr("GAME START");
-
-			game_status = 1;
 		}
-		else if(input == 'f')
-			break;
+		else if(input == 'f')  //enter키
+		{
 
-		move(LINES - 1, COLS - 1);
-		refresh();
+			if(cnt == menurow) //game start
+			{
+				game_play();
+				break;
+			}
+			else if(cnt == menurow+1)
+				game_rule();
+			else
+				game_end();
+		}
 	}
+	//return cnt;
+}
 
+void game_play(void)
+{
+	int input, i;
+
+	clear();
 	standend();
-
-	if(game_status == 0)
-	{
-		endwin();
-		tty_mode(1);
-
-		return 0;
-	}
-
-	clear();*/
 
 	init_ball();
 	init_bar();
@@ -159,8 +430,10 @@ int main()
 	if(set_ticker(70) == -1)
 		perror("set_ticker");
 
-	init_block(BLOCKCOUNT);
+
 	/* init first game screen */
+	init_block(BLOCKCOUNT);
+
 	for(i = 0; i < BLOCKCOUNT; i++)
 	{
 		move(block[i].y, block[i].x);
@@ -187,21 +460,24 @@ int main()
 	addstr("♥");
 	move(LINES-1, 7);
 	addstr("♥");
-	
+
 	while(ball.HP > 0)
 	{
+		if(block_count == BLOCKCOUNT)
+			break;
+
 		input = getchar();
 
 		switch(input)
 		{
-			case 'j':
+			case 'k':
 				if(ball.ready == 0)
 				{
 					ball.direct = TOP;
 					ball.ready = 1;
 				}
 				break;
-			case 'k':
+			case 'j':
 				if(ball.ready == 0)
 				{
 					ball.direct = LEFT_TOP;
@@ -218,7 +494,7 @@ int main()
 			case 'h':
 				if(ball.ready == 1 && (ball.y == bar.y || ball.y + 1 == bar.y)) 
 					if(ball.x >= bar.x[0] && ball.x <= (bar.x[6] + 1) ||
-						((ball.x + 1) >= bar.x[0] && (ball.x + 1) <= (bar.x[6] + 1)))
+							((ball.x + 1) >= bar.x[0] && (ball.x + 1) <= (bar.x[6] + 1)))
 					{
 						ball.y = bar.y - 1;
 						ball.ready = 0;
@@ -235,11 +511,7 @@ int main()
 				break;
 		}
 	}
-
-	endwin();
-	tty_mode(1);
-
-	return 0;
+	return;
 }
 
 void init_ball()
@@ -320,7 +592,7 @@ int check_collision(int x, int y)
 	for(i = 0; i < 7; i++)
 		if(y == bar.y)
 			if((x >= bar.x[0] && x <= (bar.x[6] + 1)) ||
-				((x + 1) >= bar.x[0] && (x + 1) <= (bar.x[6] + 1)))
+					((x + 1) >= bar.x[0] && (x + 1) <= (bar.x[6] + 1)))
 			{
 				ball.direct = block_status[ball.direct];
 				return -1;
@@ -331,11 +603,12 @@ int check_collision(int x, int y)
 		if(block[i].life == 1)
 			if(block[i].y == y)
 				if((block[i].x == x || block[i].x + 1 == x ||
-					block[i].x == x + 1 || block[i].x + 1 == x + 1))
+							block[i].x == x + 1 || block[i].x + 1 == x + 1))
 				{
 					move(block[i].y, block[i].x);
 					addstr(blank);
 					block[i].life = 0;
+					block_count++;
 					ball.direct = block_status[ball.direct];
 					count++;
 				}
@@ -442,7 +715,7 @@ void update_bar()
 	{
 		move(ball.y, ball.x);
 		addstr(blank);
-		
+
 		ball.x = bar.x[x_ball];
 		move(ball.y, ball.x);
 		addstr("●");
@@ -459,9 +732,9 @@ int search(int end, int x, int y)
 	for(i = 0; i < end; i++)
 		if(block[i].y == y)
 			if(block[i].x == x || (block[i].x + 1) == x ||
-				block[i].x == x + 1 || (block[i].x + 1) == x + 1)
+					block[i].x == x + 1 || (block[i].x + 1) == x + 1)
 				return 1;
-	
+
 	return 0;
 }
 
@@ -490,44 +763,6 @@ void init_block(int count)
 	}
 }
 
-void set_crmode()
-{
-	struct termios ttystate;
-
-	tcgetattr(0, &ttystate);
-	ttystate.c_lflag &= ~ICANON;
-	ttystate.c_cc[VMIN] = 1;
-
-	tcsetattr(0, TCSANOW, &ttystate);
-}
-
-void set_nodelay_mode()
-{
-	int termflag;
-
-	termflag = fcntl(0, F_GETFL);
-	termflag |= O_NDELAY;
-
-	fcntl(0, F_SETFL, termflag);
-}
-
-void tty_mode(int how)
-{
-	static struct termios original_mode;
-	static int original_flags;
-
-	if(how == 0)
-	{
-		tcgetattr(0, &original_mode);
-		original_flags = fcntl(0, F_GETFL);
-	}
-	else
-	{
-		tcsetattr(0, TCSANOW, &original_mode);
-		original_flags = fcntl(0, F_SETFL, original_flags);
-	}
-}
-
 int set_ticker(int n_msecs)
 {
 	struct itimerval new_timeset;
@@ -543,3 +778,75 @@ int set_ticker(int n_msecs)
 
 	return setitimer(ITIMER_REAL, &new_timeset, NULL);
 }
+
+void set_crmode(void)
+{	
+	struct termios ttystate;
+	tcgetattr(0, &ttystate);
+	ttystate.c_lflag &= ~ICANON;
+	ttystate.c_cc[VMIN] = 1;
+
+	tcsetattr(0, TCSANOW, &ttystate);
+}
+
+void set_nodelay_mode(void)
+{
+	int termflags;
+	termflags = fcntl(0, F_GETFL);
+	termflags |= O_NDELAY;
+	fcntl(0, F_SETFL, termflags);
+}
+void tty_mode(int how)
+{
+	static struct termios original_mode;
+	static int original_flags;
+
+	if(how == 0)
+	{
+		tcgetattr(0, &original_mode);
+		original_flags = fcntl(0,F_GETFL);
+	}
+	else 
+	{
+		tcsetattr(0, TCSANOW, &original_mode);
+		original_flags = fcntl(0, F_SETFL, original_flags);
+	}
+}
+void game_rule(void)
+{
+	char input;
+	
+	clear();
+	standend();
+
+	move(LINES/2, COLS/2-40);
+	addstr(" 이 게임은 공을 튀기어 벽돌을 깨는 프로그램입니다");
+	move(LINES/2+1, COLS/2-40);
+	addstr("a: 막대 왼쪽으로 / s: 막대 오른쪽으로");
+	move(LINES/2+2, COLS/2-40);
+	addstr("h : 공잡기 / j : 왼쪽 대각선으로 / k : 위로 / l : 오른쪽 대각선으로");
+	move(LINES/2+3, COLS/2-40);
+	addstr("기회는 총 3번이며 왼쪽 아래 하트로 남은 시도 횟수가 표시됩니다.");
+
+	move(LINES/2+10, COLS/2-20);
+	addstr("BACK");
+	refresh();
+
+	while(1)
+	{
+		input = getchar();
+		if(input == 'f')
+		{
+			clear();
+			start_screen();
+		}
+	}
+}
+
+void game_end(void)
+{
+	endwin();
+	tty_mode(1);
+	exit(1);
+}
+

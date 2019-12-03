@@ -124,7 +124,7 @@ void start_screen(void)
 {
 	int i;
 	char input;
-	int cnt;
+	int cnt, cnt2, cnt3; //처음에 s눌렀을 때 이동안함 수정위
 
 	//B
 	move(titlerow, titlecol);
@@ -801,4 +801,3 @@ void game_end(void)
 	tty_mode(1);
 	exit(1);
 }
-

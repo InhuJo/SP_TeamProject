@@ -118,23 +118,21 @@ int main(void)
 		signal(SIGALRM, SIG_IGN);
 		//lose_screen();
 		win_screen();
-		endwin();
-		tty_mode(1);
-		return 0;
 	}
 	else  //game win
 	{
 		signal(SIGALRM, SIG_IGN);
-		win_screen();
-		endwin();	
-		tty_mode(1);
-		return 0;
+		win_screen();	
 	}
+	endwin();
+	tty_mode(1);
+	return 0;
 
 }
 void lose_screen(void)
 {
 	clear();
+	sleep(3);
 
 }
 
@@ -151,66 +149,66 @@ void win_screen(void)
 	//W
 	for( i = titlerow ; i<titlerow+4; i = i+1)
 	{
-		move(i, titlecol+25);
+		move(i, titlecol+34);
 		attron(COLOR_PAIR(3));
 		addstr("  ");
 
-		move(i, titlecol+28);
+		move(i, titlecol+37);
 		attron(COLOR_PAIR(3));
 		addstr("  ");
 
-		move(i, titlecol+31);
+		move(i, titlecol+40);
 		attron(COLOR_PAIR(3));
 		addstr("  ");
 
 	}
-	move(titlerow+4, titlecol+25);
+	move(titlerow+4, titlecol+34);
 	attron(COLOR_PAIR(3));
 	addstr("         ");
 
 	//I
 	for( i = titlerow; i<titlerow+4; i= i+1)
 	{
-		move(i, titlecol+35);
+		move(i, titlecol+44);
 		attron(COLOR_PAIR(5));
 		addstr("  ");
 	}
-	move(titlerow, titlecol+33);
+	move(titlerow, titlecol+42);
 	attron(COLOR_PAIR(5));
 	addstr("      ");
-	move(titlerow+4, titlecol+33);
+	move(titlerow+4, titlecol+42);
 	attron(COLOR_PAIR(5));
 	addstr("      ");
 	
 	//N
 	for( i = titlerow ; i<titlerow+5; i = i+1)
 	{
-		move(i, titlecol+39);
+		move(i, titlecol+48);
 		attron(COLOR_PAIR(4));
 		addstr("  ");
 
-		move(i, titlecol+44);
+		move(i, titlecol+53);
 		attron(COLOR_PAIR(4));
 		addstr("  ");
 	}
-	move(titlerow+1, titlecol+41);
+	move(titlerow+1, titlecol+50);
 	attron(COLOR_PAIR(4));
 	addstr(" ");
-	move(titlerow+2, titlecol+42);
+	move(titlerow+2, titlecol+51);
 	attron(COLOR_PAIR(4));
 	addstr(" ");
-	move(titlerow+3, titlecol+43);
+	move(titlerow+3, titlecol+52);
 	attron(COLOR_PAIR(4));
 	addstr(" ");
 
 	//!
 	for(i = titlerow; i<titlerow+3; i = i+1)
 	{
-		move(i, titlecol +47);
+		move(i, titlecol +56);
 		attron(COLOR_PAIR(6));
 		addstr("  ");
 	}
-	move(titlerow+4, titlecol+47);
+	move(titlerow+4, titlecol+56);
 	attron(COLOR_PAIR(6));
 	addstr("  ");
 

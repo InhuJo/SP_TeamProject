@@ -18,7 +18,7 @@
 #define RIGHTEDGE 78
 #define TOPEDGE 0
 #define DOWNEDGE 22
-#define BLOCKCOUNT 50
+#define BLOCKCOUNT 1
 
 typedef enum DIRECT_BALL
 { TOP, RIGHT_TOP, RIGHT_DOWN, DOWN, LEFT_DOWN, LEFT_TOP } DIRECT_BALL;
@@ -63,6 +63,7 @@ void init_ball();
 int update_xball();
 void update_ball();
 int check_collision(int, int);
+int set_ticker(int n_msecs);
 
 /* function and variable for bar */
 Bar bar;
@@ -75,21 +76,22 @@ int block_count = 0;
 int search(int, int, int);
 void init_block(int);
 
+/* function for termianl */
 void set_crmode(void);
 void set_nodelay_mode(void);
 void tty_mode(int);
-int set_ticker(int n_msecs);
+
+/* function for time */
+struct timeval start_time, end_time;
+double operating_time;
 
 char *blank = " ";
 int game_status = 1;
-void tty_mode(int);
-void set_nodelay_mode(void);
-void set_crmode(void);
 void start_screen(void);
+void result_screen(void);
 void game_play(void);
 void game_rule(void);
 void game_end(void);
-void result_screen(void);
 
 int main(void)
 {
@@ -110,6 +112,10 @@ int main(void)
 	init_pair(7, COLOR_WHITE, COLOR_WHITE);
 
 	start_screen();
+
+	operating_time = 
+		(double)(end_time.tv_sec) + (double)(end_time.tv_usec) / 1000000.0 - 
+		(double)(start_time.tv_sec) + (double)(start_time.tv_usec) / 1000000.0;
 
 	if(ball.HP <= 0)
 	{
@@ -140,7 +146,9 @@ void result_screen(void)
 	move(titlerow, titlecol);
 	addstr("CONGRATULATION!");
 	move(titlerow+1, titlecol);
-	printw("you broke all blocks!");
+	addstr("you broke all blocks!");
+	move(titlerow+2, titlecol);
+	printw("time : %f", operating_time);
 	move(LINES-1, COLS-1);
 	refresh();
 	sleep(3);
@@ -403,7 +411,9 @@ void start_screen(void)
 
 			if(cnt == menurow) //game start
 			{
+				gettimeofday(&start_time, NULL);
 				game_play();
+				gettimeofday(&end_time, NULL);
 				break;
 			}
 			else if(cnt == menurow+1)

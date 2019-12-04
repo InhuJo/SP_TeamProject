@@ -9,6 +9,9 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <signal.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <string.h>
 
 #define titlerow 4
 #define titlecol 11
@@ -19,6 +22,8 @@
 #define TOPEDGE 0
 #define DOWNEDGE 22
 #define BLOCKCOUNT 50
+#define PORTNUM 9000
+#define oops(x,y) { perror(x); exit(y); }
 
 typedef enum DIRECT_BALL
 { TOP, RIGHT_TOP, RIGHT_DOWN, DOWN, LEFT_DOWN, LEFT_TOP } DIRECT_BALL;
@@ -508,12 +513,42 @@ void start_screen(void)
 }
 void rank_screen(void)
 {
+	int input;
+	int sock_id;
+	char buf[256];
+	struct sockaddr_in c;
+
+	if((sock_id = socket(PF_INET, SOCK_STREAM, 0)) == -1)
+		oops("socket", 1);
+
+	memset(&c, '\0', sizeof(c));
+	c.sin_family = AF_INET;
+	c.sin_port = htons(PORTNUM);
+	c.sin_addr.s_addr = inet_addr("15.164.4.71");
+
+	if(connect(sock_id, (struct sockaddr*)&c, sizeof(c)))
+		oops("connect", 1);
+
+	if(recv(sock_id, buf, sizeof(buf), 0) == -1)
+		oops("recv", 1);
+
+	close(sock_id);
+
 	clear();
+	move(titlerow, titlecol);
+	standend();
+	addstr(buf);
 	refresh();
-	sleep(3);
 
-	start_screen();
-
+	while(1)
+	{
+		input = getchar();
+		if(input == 'f')
+		{
+			clear();
+			start_screen();
+		}
+	}
 }
 void game_play(void)
 {

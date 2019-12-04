@@ -89,7 +89,9 @@ void start_screen(void);
 void game_play(void);
 void game_rule(void);
 void game_end(void);
-void result_screen(void);
+void win_screen(void);
+void lose_screen(void);
+void rank_screen(void);
 
 int main(void)
 {
@@ -111,41 +113,110 @@ int main(void)
 
 	start_screen();
 
-	if(ball.HP <= 0)
+	if(ball.HP <= 0) // game lose
 	{
 		signal(SIGALRM, SIG_IGN);
-		clear();
-		move(titlerow, titlecol);
-		addstr("you lose!");
-		move(titlerow + 1, titlecol);
-		printw("you broke %d blocks", block_count);
-		move(LINES-1, COLS-1);
-		refresh();
-		sleep(3);
+		//lose_screen();
+		win_screen();
 		endwin();
-
 		tty_mode(1);
 		return 0;
 	}
-	else
+	else  //game win
 	{
 		signal(SIGALRM, SIG_IGN);
-		result_screen();
+		win_screen();
+		endwin();	
+		tty_mode(1);
+		return 0;
 	}
 
 }
-void result_screen(void)
+void lose_screen(void)
 {
 	clear();
-	move(titlerow, titlecol);
+
+}
+
+void win_screen(void)
+{
+	int i;
+	clear();
+	move(titlerow+7, titlecol+20);
 	addstr("CONGRATULATION!");
-	move(titlerow+1, titlecol);
+	move(titlerow+8, titlecol+17);
 	printw("you broke all blocks!");
 	move(LINES-1, COLS-1);
+	
+	//W
+	for( i = titlerow ; i<titlerow+4; i = i+1)
+	{
+		move(i, titlecol+25);
+		attron(COLOR_PAIR(3));
+		addstr("  ");
+
+		move(i, titlecol+28);
+		attron(COLOR_PAIR(3));
+		addstr("  ");
+
+		move(i, titlecol+31);
+		attron(COLOR_PAIR(3));
+		addstr("  ");
+
+	}
+	move(titlerow+4, titlecol+25);
+	attron(COLOR_PAIR(3));
+	addstr("         ");
+
+	//I
+	for( i = titlerow; i<titlerow+4; i= i+1)
+	{
+		move(i, titlecol+35);
+		attron(COLOR_PAIR(5));
+		addstr("  ");
+	}
+	move(titlerow, titlecol+33);
+	attron(COLOR_PAIR(5));
+	addstr("      ");
+	move(titlerow+4, titlecol+33);
+	attron(COLOR_PAIR(5));
+	addstr("      ");
+	
+	//N
+	for( i = titlerow ; i<titlerow+5; i = i+1)
+	{
+		move(i, titlecol+39);
+		attron(COLOR_PAIR(4));
+		addstr("  ");
+
+		move(i, titlecol+44);
+		attron(COLOR_PAIR(4));
+		addstr("  ");
+	}
+	move(titlerow+1, titlecol+41);
+	attron(COLOR_PAIR(4));
+	addstr(" ");
+	move(titlerow+2, titlecol+42);
+	attron(COLOR_PAIR(4));
+	addstr(" ");
+	move(titlerow+3, titlecol+43);
+	attron(COLOR_PAIR(4));
+	addstr(" ");
+
+	//!
+	for(i = titlerow; i<titlerow+3; i = i+1)
+	{
+		move(i, titlecol +47);
+		attron(COLOR_PAIR(6));
+		addstr("  ");
+	}
+	move(titlerow+4, titlecol+47);
+	attron(COLOR_PAIR(6));
+	addstr("  ");
+
+	move(LINES-1, COLS-1);
 	refresh();
-	sleep(3);
-	tty_mode(1);
-	endwin();
+	sleep(5);
 }
 
 void start_screen(void)
@@ -333,40 +404,52 @@ void start_screen(void)
 
 	move(menurow+2, menucol);
 	standend();
-	addstr(" game end");
+	addstr(" ranking  ");
 
 	move(menurow+1, menucol);
-	standend();
-	addstr("game rule");
+	addstr("game  rule");
+
+	move(menurow+3, menucol);
+	addstr(" game end ");
 	move(LINES-1, COLS-1);
 	refresh();
-
 	while(1)
 	{
 		input = getchar();
 
 		if(input == 's')
 		{
-			if(cnt==menurow)
+			if(cnt == menurow)
 			{
 				mvdelch(menurow,menucol);
 				standend();
 				addstr("game start");
 				move(menurow+1,menucol);
 				standout();
-				addstr(" GAME RULE");
+				addstr("GAME  RULE");
 				cnt = menurow+1;
 			}
 			else if(cnt == menurow+1)
 			{
 				mvdelch(menurow+1,menucol);
 				standend();
-				addstr("game rule");
+				addstr("game  rule");
 				move(menurow+2,menucol);
 				standout();
-				addstr(" GAME END");
+				addstr(" RANKING  ");
 				cnt = menurow+2;
 			}
+			else if(cnt == menurow+2)
+			{
+				mvdelch(menurow+2,menucol);
+				standend();
+				addstr(" ranking  ");
+				move(menurow+3,menucol);
+				standout();
+				addstr(" GAME END ");
+				cnt = menurow+3;
+			}
+
 			move(LINES-1, COLS-1);
 			refresh();
 
@@ -374,21 +457,31 @@ void start_screen(void)
 
 		if(input == 'w' )
 		{
-			if(cnt==menurow+2)
+			if(cnt == menurow+3)
+			{
+				mvdelch(menurow+3,menucol);
+				standend();
+				addstr(" game end ");
+				move(menurow+2 ,menucol);
+				standout();
+				addstr(" RANKING  ");
+				cnt = menurow+2;
+			}
+			else if(cnt==menurow+2)
 			{
 				mvdelch(menurow+2,menucol);
 				standend();
-				addstr(" game end");
+				addstr(" ranking  ");
 				move(menurow+1,menucol);
 				standout();
-				addstr("GAME RULE");
+				addstr("GAME  RULE");
 				cnt = menurow+1;
 			}
 			else if(cnt == menurow+1)
 			{
 				mvdelch(menurow+1, menucol);
 				standend();
-				addstr(" game rule");
+				addstr("game  rule");
 				move(menurow, menucol);
 				standout();
 				addstr("GAME START");
@@ -408,13 +501,22 @@ void start_screen(void)
 			}
 			else if(cnt == menurow+1)
 				game_rule();
+			else if(cnt == menurow+2)
+				rank_screen();
 			else
 				game_end();
 		}
 	}
-	//return cnt;
 }
+void rank_screen(void)
+{
+	clear();
+	refresh();
+	sleep(3);
 
+	start_screen();
+
+}
 void game_play(void)
 {
 	int input, i;
@@ -427,7 +529,7 @@ void game_play(void)
 
 	signal(SIGALRM, update_ball);
 
-	if(set_ticker(70) == -1)
+	if(set_ticker(80) == -1)
 		perror("set_ticker");
 
 

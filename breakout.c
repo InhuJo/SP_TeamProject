@@ -21,9 +21,10 @@
 #define RIGHTEDGE 78
 #define TOPEDGE 0
 #define DOWNEDGE 22
-#define BLOCKCOUNT 50
-#define PORTNUM 9000
+#define BLOCKCOUNT 30
+#define PORTNUM 12052
 #define oops(x,y) { perror(x); exit(y); }
+#define swap(x,y,z) z=x, x=y, y=z
 
 typedef enum DIRECT_BALL
 { TOP, RIGHT_TOP, RIGHT_DOWN, DOWN, LEFT_DOWN, LEFT_TOP } DIRECT_BALL;
@@ -61,6 +62,12 @@ int ball_status[4][6] = {
 
 int block_status[6] = { 3, 2, 1, 0, 5, 4 };
 
+typedef struct
+{
+	char user[20];
+	double time;
+}score;
+
 /* function and variable for ball */
 Ball ball;
 int x_ball;
@@ -68,6 +75,7 @@ void init_ball();
 int update_xball();
 void update_ball();
 int check_collision(int, int);
+int set_ticker(int n_msecs);
 
 /* function and variable for bar */
 Bar bar;
@@ -80,16 +88,18 @@ int block_count = 0;
 int search(int, int, int);
 void init_block(int);
 
+/* function for terminal */
 void set_crmode(void);
 void set_nodelay_mode(void);
 void tty_mode(int);
-int set_ticker(int n_msecs);
+
+/* function for time */
+struct timeval start_time, end_time;
+double operating_time;
 
 char *blank = " ";
 int game_status = 1;
-void tty_mode(int);
-void set_nodelay_mode(void);
-void set_crmode(void);
+
 void start_screen(void);
 void game_play(void);
 void game_rule(void);
@@ -97,6 +107,7 @@ void game_end(void);
 void win_screen(void);
 void lose_screen(void);
 void rank_screen(void);
+void sort(score*, int);
 
 int main(void)
 {
@@ -107,8 +118,8 @@ int main(void)
 
 	initscr();
 	clear();
-	start_color(); //터미널에 color를 시작하겠다
-	init_pair(1, COLOR_RED, COLOR_RED);  //글자색과 터미널바탕색 pair를 1로 초기화시킴
+	start_color();
+	init_pair(1, COLOR_RED, COLOR_RED);  
 	init_pair(2, COLOR_GREEN, COLOR_GREEN);
 	init_pair(3, COLOR_YELLOW, COLOR_YELLOW);
 	init_pair(4, COLOR_BLUE, COLOR_BLUE);
@@ -118,108 +129,316 @@ int main(void)
 
 	start_screen();
 
-	if(ball.HP <= 0) // game lose
+	operating_time = 
+		(double)(end_time.tv_sec) + 
+		(double)(end_time.tv_usec) / 1000000.0 - 
+		(double)(start_time.tv_sec) + 
+		(double)(start_time.tv_usec) / 1000000.0;
+
+	signal(SIGALRM, SIG_IGN);
+
+	if(ball.HP <= 0)
 	{
-		signal(SIGALRM, SIG_IGN);
-		//lose_screen();
-		win_screen();
+		lose_screen();
 	}
-	else  //game win
+	else
 	{
-		signal(SIGALRM, SIG_IGN);
 		win_screen();	
 	}
 	endwin();
 	tty_mode(1);
 	return 0;
-
 }
+
 void lose_screen(void)
 {
-	clear();
-	sleep(3);
+	int i;
 
+	clear();
+	move(titlerow+7, titlecol+20);
+	attron(COLOR_PAIR(0));
+	addstr("   IT IS OKAY!");
+
+	//Y
+	move(titlerow, titlecol);
+	attron(COLOR_PAIR(5));
+	addstr("  ");
+	move(titlerow+1, titlecol+1);	
+	addstr("  ");
+	move(titlerow+2, titlecol+2);
+	addstr("  ");
+
+	move(titlerow+2, titlecol+4);
+	addstr("  ");
+	move(titlerow+1, titlecol+5);
+	addstr("  ");
+	move(titlerow, titlecol+6);
+	addstr("  ");
+
+	for(i = titlerow+2; i<titlerow+5; i = i+1)
+	{
+		move(i, titlecol+3);
+		addstr("  ");
+	}
+
+	//O
+	move(titlerow, titlecol+8);
+	attron(COLOR_PAIR(6));
+	addstr("       ");
+
+	move(titlerow+4, titlecol+8);
+	addstr("       ");
+
+	for(i = titlerow ; i<titlerow+5;i = i+1)
+	{
+		move(i, titlecol+8);
+		addstr("  ");
+		move(i, titlecol+13);
+		addstr("  ");
+	}
+
+	//U
+	for(i = titlerow; i<titlerow+5; i=i+1)
+	{
+		move(i, titlecol+15);
+		attron(COLOR_PAIR(7));
+		addstr("  ");
+		move(i, titlecol+20);
+		addstr("  ");
+	}
+	move(titlerow+4, titlecol+17);
+	addstr("     ");
+
+	//L
+	move(titlerow+4, titlecol+30);
+	attron(COLOR_PAIR(1));
+	addstr("     ");
+	for(i = titlerow ; i<titlerow+5; i = i+1)
+	{
+		move(i, titlecol+28);
+		addstr("  ");
+	}
+
+	//O
+	move(titlerow, titlecol+35);
+	attron(COLOR_PAIR(2));
+	addstr("       ");
+
+	move(titlerow+4, titlecol+35);
+	attron(COLOR_PAIR(2));
+	addstr("       ");
+
+	for(i = titlerow ; i<titlerow+5;i = i+1)
+	{
+		move(i, titlecol+35);
+		attron(COLOR_PAIR(2));
+		addstr("  ");
+		move(i, titlecol+40);
+		attron(COLOR_PAIR(2));
+		addstr("  ");
+	}
+
+	//S
+	move(titlerow, titlecol+42);
+	attron(COLOR_PAIR(3));
+	addstr("       ");
+
+	move(titlerow+2, titlecol+42);
+	attron(COLOR_PAIR(3));
+	addstr("       ");
+
+	move(titlerow+4, titlecol+42);
+	addstr("       ");
+
+	move(titlerow+1,titlecol+42);
+	addstr("  ");
+
+	move(titlerow+3,titlecol+47);
+	addstr("  ");
+
+	//E
+	for(i = titlerow ; i < titlerow + 5; i = i +1)
+	{
+		move(i, titlecol +49);
+		attron(COLOR_PAIR(4));
+		addstr("  ");
+	}
+	move(titlerow, titlecol+49);
+	attron(COLOR_PAIR(4));
+	addstr("      ");
+
+	move(titlerow+2, titlecol+49);
+	attron(COLOR_PAIR(4));
+	addstr("      ");
+
+	move(titlerow+4, titlecol+49);
+	attron(COLOR_PAIR(4));
+	addstr("      ");
+
+	//!
+	for(i = titlerow; i<titlerow+3; i = i+1)
+	{
+		move(i, titlecol +57);
+		attron(COLOR_PAIR(6));
+		addstr("  ");
+	}
+	move(titlerow+4, titlecol+57);
+	attron(COLOR_PAIR(6));
+	addstr("  ");
+
+	move(LINES-1, COLS-1);
+	refresh();
+	sleep(4);
 }
 
 void win_screen(void)
 {
-	int i;
+	int input, i;
+	int sock_id;
+	char buf[256], flag_buf[10];
+	struct sockaddr_in c;
+
+	if((sock_id = socket(PF_INET, SOCK_STREAM, 0)) == -1)
+		oops("socket", 1);
+
+	memset(&c, '\0', sizeof(c));
+	c.sin_family = AF_INET;
+	c.sin_port = htons(PORTNUM);
+	c.sin_addr.s_addr = inet_addr("15.164.4.71");
+
+	if(connect(sock_id, (struct sockaddr*)&c, sizeof(c)))
+		oops("connect", 1);
+
+	strcpy(flag_buf, "1");
+
+	if(send(sock_id, flag_buf, strlen(flag_buf) + 1, 0) == -1)
+		oops("send", 1);
+
+	sprintf(buf, "%.3lf", operating_time);
+
+	if(send(sock_id, buf, strlen(buf) + 1, 0) == -1)
+		oops("send", 1);
+
 	clear();
 	move(titlerow+7, titlecol+20);
+	attron(COLOR_PAIR(0));
 	addstr("CONGRATULATION!");
 	move(titlerow+8, titlecol+17);
-	printw("you broke all blocks!");
+	addstr("you broke all blocks!");
 	move(LINES-1, COLS-1);
-	
+
+	//Y
+	move(titlerow, titlecol+2);
+	attron(COLOR_PAIR(1));
+	addstr("  ");
+	move(titlerow+1, titlecol+3);	
+	addstr("  ");
+	move(titlerow+2, titlecol+5);
+	addstr("  ");
+
+	move(titlerow+1, titlecol+7);
+	addstr("  ");
+	move(titlerow, titlecol+8);
+	addstr("  ");
+
+	for(i = titlerow+2; i<titlerow+5; i = i+1)
+	{
+		move(i, titlecol+5);
+		addstr("  ");
+	}
+
+	//O
+	move(titlerow, titlecol+10);
+	attron(COLOR_PAIR(6));
+	addstr("       ");
+
+	move(titlerow+4, titlecol+10);
+	addstr("       ");
+
+	for(i = titlerow ; i<titlerow+5;i = i+1)
+	{
+		move(i, titlecol+10);
+		addstr("  ");
+		move(i, titlecol+15);
+		addstr("  ");
+	}
+
+	//U
+	for(i = titlerow; i<titlerow+5; i=i+1)
+	{
+		move(i, titlecol+17);
+		attron(COLOR_PAIR(7));
+		addstr("  ");
+		move(i, titlecol+22);
+		addstr("  ");
+	}
+	move(titlerow+4, titlecol+17);
+	addstr("     ");
+
 	//W
 	for( i = titlerow ; i<titlerow+4; i = i+1)
 	{
-		move(i, titlecol+34);
+		move(i, titlecol+32);
 		attron(COLOR_PAIR(3));
 		addstr("  ");
 
-		move(i, titlecol+37);
+		move(i, titlecol+35);
 		attron(COLOR_PAIR(3));
 		addstr("  ");
 
-		move(i, titlecol+40);
+		move(i, titlecol+38);
 		attron(COLOR_PAIR(3));
 		addstr("  ");
 
 	}
-	move(titlerow+4, titlecol+34);
+	move(titlerow+4, titlecol+32);
 	attron(COLOR_PAIR(3));
 	addstr("         ");
 
 	//I
 	for( i = titlerow; i<titlerow+4; i= i+1)
 	{
-		move(i, titlecol+44);
+		move(i, titlecol+42);
 		attron(COLOR_PAIR(5));
 		addstr("  ");
 	}
-	move(titlerow, titlecol+42);
+	move(titlerow, titlecol+40);
 	attron(COLOR_PAIR(5));
 	addstr("      ");
-	move(titlerow+4, titlecol+42);
+	move(titlerow+4, titlecol+40);
 	attron(COLOR_PAIR(5));
 	addstr("      ");
-	
+
 	//N
 	for( i = titlerow ; i<titlerow+5; i = i+1)
 	{
-		move(i, titlecol+48);
+		move(i, titlecol+46);
 		attron(COLOR_PAIR(4));
 		addstr("  ");
 
-		move(i, titlecol+53);
-		attron(COLOR_PAIR(4));
+		move(i, titlecol+51);
 		addstr("  ");
 	}
-	move(titlerow+1, titlecol+50);
-	attron(COLOR_PAIR(4));
+	move(titlerow+1, titlecol+48);
 	addstr(" ");
-	move(titlerow+2, titlecol+51);
-	attron(COLOR_PAIR(4));
+	move(titlerow+2, titlecol+49);
 	addstr(" ");
-	move(titlerow+3, titlecol+52);
-	attron(COLOR_PAIR(4));
+	move(titlerow+3, titlecol+50);
 	addstr(" ");
 
 	//!
 	for(i = titlerow; i<titlerow+3; i = i+1)
 	{
-		move(i, titlecol +56);
+		move(i, titlecol +54);
 		attron(COLOR_PAIR(6));
 		addstr("  ");
 	}
-	move(titlerow+4, titlecol+56);
-	attron(COLOR_PAIR(6));
+	move(titlerow+4, titlecol+54);
 	addstr("  ");
 
 	move(LINES-1, COLS-1);
 	refresh();
-	sleep(5);
+	sleep(4);
 }
 
 void start_screen(void)
@@ -253,6 +472,7 @@ void start_screen(void)
 		attron(COLOR_PAIR(1));
 		addstr("  ");
 	}
+
 	//R
 	for(i = titlerow; i < titlerow+5; i = i+1)
 	{
@@ -283,6 +503,7 @@ void start_screen(void)
 		attron(COLOR_PAIR(3));
 		addstr("  ");
 	}
+
 	//E
 	for(i = titlerow ; i < titlerow + 5; i = i +1)
 	{
@@ -416,6 +637,7 @@ void start_screen(void)
 	addstr(" game end ");
 	move(LINES-1, COLS-1);
 	refresh();
+
 	while(1)
 	{
 		input = getchar();
@@ -511,12 +733,16 @@ void start_screen(void)
 		}
 	}
 }
+
 void rank_screen(void)
 {
-	int input;
+	int input, size, i = 0, j = 0;
+	int row = 5, col = 25;
 	int sock_id;
-	char buf[256];
+	char temp[BUFSIZ], flag_buf[10], t[10];
+	char *buf;
 	struct sockaddr_in c;
+	score s[100];
 
 	if((sock_id = socket(PF_INET, SOCK_STREAM, 0)) == -1)
 		oops("socket", 1);
@@ -529,16 +755,42 @@ void rank_screen(void)
 	if(connect(sock_id, (struct sockaddr*)&c, sizeof(c)))
 		oops("connect", 1);
 
-	if(recv(sock_id, buf, sizeof(buf), 0) == -1)
+	strcpy(flag_buf, "0");
+
+	if(send(sock_id, flag_buf, strlen(flag_buf) + 1, 0) == -1)
+		oops("send", 1);
+
+	if((size = recv(sock_id, temp, sizeof(temp), 0)) < 0)
 		oops("recv", 1);
 
-	close(sock_id);
+	buf = malloc(size);
+	memset(buf, 0, size);
+	strcpy(buf, temp);
 
 	clear();
-	move(titlerow, titlecol);
 	standend();
-	addstr(buf);
+
+	move(3, 22);
+	addstr("-------------Ranking-------------");
+	while(strcmp(buf, "\0"))
+	{
+		sscanf(buf, "%s %s", s[i].user, t);
+		size = strlen(s[i].user) + strlen(t) + 2;
+		s[i].time = atof(t);
+		buf = buf + size;
+		i++;
+	}
+	sort(s, i);
+
+	for(j = 0; j < i; j++)
+	{
+		move(row+j, col);
+		printw("%d. %13s %10.3lf", j+1, s[j].user, s[j].time);
+	}
+	move(LINES-1, COLS-1);
+
 	refresh();
+	close(sock_id);
 
 	while(1)
 	{
@@ -550,6 +802,25 @@ void rank_screen(void)
 		}
 	}
 }
+
+void sort(score *s, int n)
+{
+	int i, j, least;
+	score temp;
+
+	for(i = 0; i < n - 1; i++)
+	{
+		least = i;
+
+		for(j = i + 1; j < n; j++)
+			if(s[j].time < s[least].time)
+				least = j;
+
+		if(i != least)
+			swap(s[i], s[least], temp);
+	}
+}
+
 void game_play(void)
 {
 	int input, i;
@@ -931,6 +1202,7 @@ void set_nodelay_mode(void)
 	termflags |= O_NDELAY;
 	fcntl(0, F_SETFL, termflags);
 }
+
 void tty_mode(int how)
 {
 	static struct termios original_mode;
@@ -947,24 +1219,55 @@ void tty_mode(int how)
 		original_flags = fcntl(0, F_SETFL, original_flags);
 	}
 }
+
 void game_rule(void)
 {
-	char input;
+	char input, i;
 
 	clear();
 	standend();
 
-	move(LINES/2, COLS/2-40);
+	move(3, 20);
+	addstr("--------------HOW TO PLAY--------------");
+
+	move(5, 30);
+	addstr("w: 위 메뉴로 이동");
+	move(6, 29);
+	addstr("s: 아래 메뉴로 이동");
+	move(7, 32);
+	addstr("f: 메뉴 선택");
+
+	move(9, 28);
+	addstr("a: 막대 왼쪽으로 이동");
+	move(10,27);
+	addstr("d: 막대 오른쪽으로 이동");
+
+	move(12, 33);
+	addstr("h: 공잡기");
+	move(13, 27);
+	addstr("j: 왼쪽 대각선으로 공 발사");
+	move(11, 29);
+	addstr("k: 위쪽으로 공 발사");
+	move(12, 26);
+	addstr("l: 오른쪽 대각선으로 공 발사");
+
+	move(15, 20);
+	addstr("---------------------------------------");
+	
+	/*move(LINES/2, COLS/2-40);
 	addstr(" 이 게임은 공을 튀기어 벽돌을 깨는 프로그램입니다");
 	move(LINES/2+1, COLS/2-40);
 	addstr("a: 막대 왼쪽으로 / s: 막대 오른쪽으로");
 	move(LINES/2+2, COLS/2-40);
 	addstr("h : 공잡기 / j : 왼쪽 대각선으로 / k : 위로 / l : 오른쪽 대각선으로");
 	move(LINES/2+3, COLS/2-40);
-	addstr("기회는 총 3번이며 왼쪽 아래 하트로 남은 시도 횟수가 표시됩니다.");
+	addstr("기회는 총 3번이며 왼쪽 아래 하트로 남은 시도 횟수가 표시됩니다.");*/
 
-	move(LINES/2+10, COLS/2-20);
+	move(22, 36);
+	standout();
 	addstr("BACK");
+	standend();
+	move(LINES-1, COLS-1);
 	refresh();
 
 	while(1)

@@ -131,15 +131,15 @@ int main(void)
 }
 void lose_screen(void)
 {
-	int i, input;
+	int i;
 
 	clear();
 	move(titlerow+7, titlecol+20);
 	attron(COLOR_PAIR(0));
-	addstr("IT IS OKAY!");
-	move(titlerow+8, titlecol+20);
-	standout();
-	addstr(" TRY AGAIN!");
+	addstr("   IT IS OKAY!");
+	//move(titlerow+8, titlecol+20);
+	//standout();
+	//addstr(" TRY AGAIN!");
 
 	//Y
 	move(titlerow, titlecol);
@@ -264,17 +264,7 @@ void lose_screen(void)
 	
 	move(LINES-1, COLS-1);
 	refresh();
-
-	while(1)
-	{
-		input = getchar();
-		if(input == 'f')
-		{
-			clear();
-			game_play();
-		}
-	}
-
+	sleep(4);
 
 }
 
@@ -287,9 +277,9 @@ void win_screen(void)
 	addstr("CONGRATULATION!");
 	move(titlerow+8, titlecol+17);
 	addstr("you broke all blocks!");
-	move(titlerow+10, titlecol+21);
-	standout();
-	addstr("BACK TO STRAT");
+	//move(titlerow+10, titlecol+21);
+	//standout();
+	//addstr("BACK TO STRAT");
 	move(LINES-1, COLS-1);
 
 	//Y
@@ -397,21 +387,11 @@ void win_screen(void)
 		addstr("  ");
 	}
 	move(titlerow+4, titlecol+54);
-	attron(COLOR_PAIR(6));
 	addstr("  ");
 
 	move(LINES-1, COLS-1);
-
 	refresh();
-	while(1)
-	{
-		input = getchar();
-		if(input == 'f')
-		{
-			clear();
-			start_screen();
-		}
-	}
+	sleep(4);
 }
 
 void start_screen(void)

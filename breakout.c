@@ -21,8 +21,8 @@
 #define RIGHTEDGE 78
 #define TOPEDGE 0
 #define DOWNEDGE 22
-#define BLOCKCOUNT 30
-#define PORTNUM 12052
+#define BLOCKCOUNT 3
+#define PORTNUM 12000
 #define oops(x,y) { perror(x); exit(y); }
 #define swap(x,y,z) z=x, x=y, y=z
 
@@ -107,6 +107,7 @@ void game_end(void);
 void win_screen(void);
 void lose_screen(void);
 void rank_screen(void);
+void rank_screen2(void);
 void sort(score*, int);
 
 int main(void)
@@ -119,6 +120,7 @@ int main(void)
 	initscr();
 	clear();
 	start_color();
+	init_pair(0, COLOR_WHITE, COLOR_BLACK);
 	init_pair(1, COLOR_RED, COLOR_RED);  
 	init_pair(2, COLOR_GREEN, COLOR_GREEN);
 	init_pair(3, COLOR_YELLOW, COLOR_YELLOW);
@@ -295,7 +297,7 @@ void win_screen(void)
 {
 	int input, i;
 	int sock_id;
-	char buf[256], flag_buf[10];
+	char buf[10], flag_buf[10];
 	struct sockaddr_in c;
 
 	if((sock_id = socket(PF_INET, SOCK_STREAM, 0)) == -1)
@@ -315,11 +317,15 @@ void win_screen(void)
 		oops("send", 1);
 
 	sprintf(buf, "%.3lf", operating_time);
-
-	if(send(sock_id, buf, strlen(buf) + 1, 0) == -1)
-		oops("send", 1);
+	printf("%s\n", buf);
 
 	clear();
+	move(titlerow+9, titlecol+20);
+	printw("Your time: %.3lf", operating_time);
+
+	if(send(sock_id, buf, strlen(buf), 0) == -1)
+		oops("send", 1);
+
 	move(titlerow+7, titlecol+20);
 	attron(COLOR_PAIR(0));
 	addstr("CONGRATULATION!");
@@ -438,7 +444,89 @@ void win_screen(void)
 
 	move(LINES-1, COLS-1);
 	refresh();
-	sleep(4);
+
+	while(1)
+	{
+		input = getchar();
+
+		if(input == 'f')
+		{
+			clear();
+			rank_screen2();
+		}
+	}
+}
+
+void rank_screen2(void)
+{
+	int input, size, i = 0, j = 0;
+	int row = 5, col = 25;
+	int sock_id;
+	char temp[BUFSIZ], flag_buf[10], t[10];
+	char *buf;
+	struct sockaddr_in c;
+	score s[100];
+
+	if((sock_id = socket(PF_INET, SOCK_STREAM, 0)) == -1)
+		oops("socket", 1);
+
+	memset(&c, '\0', sizeof(c));
+	c.sin_family = AF_INET;
+	c.sin_port = htons(PORTNUM);
+	c.sin_addr.s_addr = inet_addr("15.164.4.71");
+
+	if(connect(sock_id, (struct sockaddr*)&c, sizeof(c)))
+		oops("connect", 1);
+
+	strcpy(flag_buf, "0");
+
+	if(send(sock_id, flag_buf, strlen(flag_buf) + 1, 0) == -1)
+		oops("send", 1);
+
+	if((size = recv(sock_id, temp, sizeof(temp), 0)) < 0)
+		oops("recv", 1);
+
+	buf = malloc(size);
+	memset(buf, 0, size);
+	strcpy(buf, temp);
+
+	clear();
+	standend();
+
+	move(3, 22);
+	addstr("-------------Ranking-------------");
+	while(strcmp(buf, "\0"))
+	{
+		sscanf(buf, "%s %s", s[i].user, t);
+		size = strlen(s[i].user) + strlen(t) + 2;
+		s[i].time = atof(t);
+		buf = buf + size;
+		i++;
+	}
+	sort(s, i);
+
+	if(i > 10)
+		i = 10;
+
+	for(j = 0; j < i; j++)
+	{
+		move(row+j, col);
+		printw("%d. %13s %10.3lf", j+1, s[j].user, s[j].time);
+	}
+	move(LINES-1, COLS-1);
+
+	refresh();
+	close(sock_id);
+
+	while(1)
+	{
+		input = getchar();
+		if(input == 'f')
+		{
+			clear();
+			game_end();
+		}
+	}
 }
 
 void start_screen(void)
@@ -721,7 +809,9 @@ void start_screen(void)
 
 			if(cnt == menurow) //game start
 			{
+				gettimeofday(&start_time, NULL);
 				game_play();
+				gettimeofday(&end_time, NULL);
 				break;
 			}
 			else if(cnt == menurow+1)
@@ -795,6 +885,7 @@ void rank_screen(void)
 	while(1)
 	{
 		input = getchar();
+
 		if(input == 'f')
 		{
 			clear();
@@ -867,57 +958,57 @@ void game_play(void)
 	move(LINES-1, 7);
 	addstr("♥");
 
-	while(ball.HP > 0)
+	while(1)
 	{
+		if(ball.HP <= 0)
+		{
+			signal(SIGALRM, SIG_IGN);
+			return;
+		}
 		if(block_count == BLOCKCOUNT)
-			break;
+		{
+			signal(SIGALRM, SIG_IGN);
+			return;
+		}
 
 		input = getchar();
 
-		switch(input)
+		if(ball.ready == 0 && input == 'k')
 		{
-			case 'k':
-				if(ball.ready == 0)
-				{
-					ball.direct = TOP;
-					ball.ready = 1;
-				}
-				break;
-			case 'j':
-				if(ball.ready == 0)
-				{
-					ball.direct = LEFT_TOP;
-					ball.ready = 1;
-				}
-				break;
-			case 'l':
-				if(ball.ready == 0)
-				{
-					ball.direct = RIGHT_TOP;
-					ball.ready = 1;
-				}
-				break;
-			case 'h':
-				if(ball.ready == 1 && (ball.y == bar.y || ball.y + 1 == bar.y)) 
-					if(ball.x >= bar.x[0] && ball.x <= (bar.x[6] + 1) ||
-							((ball.x + 1) >= bar.x[0] && (ball.x + 1) <= (bar.x[6] + 1)))
-					{
-						ball.y = bar.y - 1;
-						ball.ready = 0;
-						x_ball = update_xball();
-					}
-				break;	
-			case 'a':
-				bar.direct = LEFT;
-				update_bar();
-				break;
-			case 'd':
-				bar.direct = RIGHT;
-				update_bar();
-				break;
+			ball.direct = TOP;
+			ball.ready = 1;
+		}
+		else if(ball.ready == 0 && input == 'j')
+		{
+			ball.direct = LEFT_TOP;
+			ball.ready = 1;
+		}
+		else if(ball.ready == 0 && input == 'l')
+		{
+			ball.direct = RIGHT_TOP;
+			ball.ready = 1;
+		}
+		else if(ball.ready == 1 && input == 'h')
+			if((ball.y == bar.y || ball.y + 1 == bar.y) &&
+					((ball.x >= bar.x[0] && ball.x <= bar.x[6] + 1) ||
+					 (ball.x + 1 >= bar.x[0] && ball.x + 1 <= bar.x[6] + 1)))
+			{
+				ball.y = bar.y - 1;
+				ball.ready = 0;
+				x_ball = update_xball();
+			}
+
+		if(input == 'a')
+		{
+			bar.direct = LEFT;
+			update_bar();
+		}
+		else if(input == 'd')
+		{
+			bar.direct = RIGHT;
+			update_bar();
 		}
 	}
-	return;
 }
 
 void init_ball()
@@ -1253,15 +1344,15 @@ void game_rule(void)
 
 	move(15, 20);
 	addstr("---------------------------------------");
-	
+
 	/*move(LINES/2, COLS/2-40);
-	addstr(" 이 게임은 공을 튀기어 벽돌을 깨는 프로그램입니다");
-	move(LINES/2+1, COLS/2-40);
-	addstr("a: 막대 왼쪽으로 / s: 막대 오른쪽으로");
-	move(LINES/2+2, COLS/2-40);
-	addstr("h : 공잡기 / j : 왼쪽 대각선으로 / k : 위로 / l : 오른쪽 대각선으로");
-	move(LINES/2+3, COLS/2-40);
-	addstr("기회는 총 3번이며 왼쪽 아래 하트로 남은 시도 횟수가 표시됩니다.");*/
+	  addstr(" 이 게임은 공을 튀기어 벽돌을 깨는 프로그램입니다");
+	  move(LINES/2+1, COLS/2-40);
+	  addstr("a: 막대 왼쪽으로 / s: 막대 오른쪽으로");
+	  move(LINES/2+2, COLS/2-40);
+	  addstr("h : 공잡기 / j : 왼쪽 대각선으로 / k : 위로 / l : 오른쪽 대각선으로");
+	  move(LINES/2+3, COLS/2-40);
+	  addstr("기회는 총 3번이며 왼쪽 아래 하트로 남은 시도 횟수가 표시됩니다.");*/
 
 	move(22, 36);
 	standout();

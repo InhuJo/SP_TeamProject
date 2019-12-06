@@ -21,7 +21,7 @@
 #define RIGHTEDGE 78
 #define TOPEDGE 0
 #define DOWNEDGE 22
-#define BLOCKCOUNT 3
+#define BLOCKCOUNT 1
 #define PORTNUM 12000
 #define oops(x,y) { perror(x); exit(y); }
 #define swap(x,y,z) z=x, x=y, y=z
@@ -326,8 +326,13 @@ void win_screen(void)
 	if(send(sock_id, buf, strlen(buf), 0) == -1)
 		oops("send", 1);
 
-	move(titlerow+7, titlecol+20);
+	move(titlerow +11, titlecol +21);
 	attron(COLOR_PAIR(0));
+	standout();
+	addstr("SHOW RANKING");
+
+	move(titlerow+7, titlecol+20);
+	standend();
 	addstr("CONGRATULATION!");
 	move(titlerow+8, titlecol+17);
 	addstr("you broke all blocks!");

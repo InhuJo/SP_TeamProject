@@ -18,7 +18,7 @@
 #define RIGHTEDGE 78
 #define TOPEDGE 0
 #define DOWNEDGE 22
-#define BLOCKCOUNT 1
+#define BLOCKCOUNT 50
 
 typedef enum DIRECT_BALL
 { TOP, RIGHT_TOP, RIGHT_DOWN, DOWN, LEFT_DOWN, LEFT_TOP } DIRECT_BALL;
@@ -1092,9 +1092,11 @@ void tty_mode(int how)
 void game_rule(void)
 {
 	char input;
-	
+	int i;
 	clear();
 	standend();
+	for(i = titlerow ; i<titlerow+11 ; i= i+1)
+	{
 
 	move(LINES/2, COLS/2-40);
 	addstr(" 이 게임은 공을 튀기어 벽돌을 깨는 프로그램입니다");

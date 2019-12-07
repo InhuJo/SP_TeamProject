@@ -21,7 +21,7 @@
 #define RIGHTEDGE 78
 #define TOPEDGE 0
 #define DOWNEDGE 22
-#define BLOCKCOUNT 1
+#define BLOCKCOUNT 10
 #define PORTNUM 12000
 #define oops(x,y) { perror(x); exit(y); }
 #define swap(x,y,z) z=x, x=y, y=z
@@ -465,7 +465,7 @@ void win_screen(void)
 void rank_screen2(void)
 {
 	int input, size, i = 0, j = 0;
-	int row = 5, col = 25;
+	int row = 5, col = 22;
 	int sock_id;
 	char temp[BUFSIZ], flag_buf[10], t[10];
 	char *buf;
@@ -510,13 +510,10 @@ void rank_screen2(void)
 	}
 	sort(s, i);
 
-	if(i > 10)
-		i = 10;
-
-	for(j = 0; j < i; j++)
+	for(j = 0; j < 10; j++)
 	{
 		move(row+j, col);
-		printw("%d. %13s %10.3lf", j+1, s[j].user, s[j].time);
+		printw("%3d. %15s %10.3lf", j+1, s[j].user, s[j].time);
 	}
 	move(LINES-1, COLS-1);
 
@@ -832,7 +829,7 @@ void start_screen(void)
 void rank_screen(void)
 {
 	int input, size, i = 0, j = 0;
-	int row = 5, col = 25;
+	int row = 5, col = 22;
 	int sock_id;
 	char temp[BUFSIZ], flag_buf[10], t[10];
 	char *buf;
@@ -876,21 +873,25 @@ void rank_screen(void)
 		i++;
 	}
 	sort(s, i);
+	close(sock_id);
 
-	for(j = 0; j < i; j++)
+	for(j = 0; j < 10; j++)
 	{
 		move(row+j, col);
-		printw("%d. %13s %10.3lf", j+1, s[j].user, s[j].time);
+		printw("%3d. %15s %10.3lf", j+1, s[j].user, s[j].time);
 	}
 	move(LINES-1, COLS-1);
-
+	
+	move(22, 36);
+	standout();
+	addstr("BACK");
+	standend();
+	move(LINES-1, COLS-1);
 	refresh();
-	close(sock_id);
 
 	while(1)
 	{
 		input = getchar();
-
 		if(input == 'f')
 		{
 			clear();

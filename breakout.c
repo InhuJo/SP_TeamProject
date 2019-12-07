@@ -21,7 +21,7 @@
 #define RIGHTEDGE 78
 #define TOPEDGE 0
 #define DOWNEDGE 22
-#define BLOCKCOUNT 10
+#define BLOCKCOUNT 20
 #define PORTNUM 12000
 #define oops(x,y) { perror(x); exit(y); }
 #define swap(x,y,z) z=x, x=y, y=z
@@ -153,6 +153,7 @@ int main(void)
 }
 
 void lose_screen(void)
+
 {
 	int i;
 
@@ -510,7 +511,10 @@ void rank_screen2(void)
 	}
 	sort(s, i);
 
-	for(j = 0; j < 10; j++)
+	if(i > 10)
+		i = 10;
+
+	for(j = 0; j < i; j++)
 	{
 		move(row+j, col);
 		printw("%3d. %15s %10.3lf", j+1, s[j].user, s[j].time);
@@ -875,7 +879,10 @@ void rank_screen(void)
 	sort(s, i);
 	close(sock_id);
 
-	for(j = 0; j < 10; j++)
+	if(i > 10)
+		i = 10;
+
+	for(j = 0; j < i; j++)
 	{
 		move(row+j, col);
 		printw("%3d. %15s %10.3lf", j+1, s[j].user, s[j].time);
@@ -995,9 +1002,8 @@ void game_play(void)
 			ball.ready = 1;
 		}
 		else if(ball.ready == 1 && input == 'h')
-			if((ball.y == bar.y || ball.y + 1 == bar.y) &&
-					((ball.x >= bar.x[0] && ball.x <= bar.x[6] + 1) ||
-					 (ball.x + 1 >= bar.x[0] && ball.x + 1 <= bar.x[6] + 1)))
+			if((ball.y == bar.y - 1 || ball.y == bar.y) && 
+					(ball.x >= bar.x[0] && ball.x <= bar.x[6]))
 			{
 				ball.y = bar.y - 1;
 				ball.ready = 0;
@@ -1094,25 +1100,27 @@ int check_collision(int x, int y)
 	/* check collision with bar */
 	for(i = 0; i < 7; i++)
 		if(y == bar.y)
-			if((x >= bar.x[0] && x <= (bar.x[6] + 1)) ||
-					((x + 1) >= bar.x[0] && (x + 1) <= (bar.x[6] + 1)))
+			if((x >= bar.x[0] && x <= bar.x[6] + 1)||
+					(x >= bar.x[0] - 1 && x <= bar.x[6]))
 			{
 				ball.direct = block_status[ball.direct];
-				return -1;
+
+				return 1;
 			}
 
 	/* check collision with block */
 	for(i = 0; i < BLOCKCOUNT; i++)
-		if(block[i].life == 1)
-			if(block[i].y == y)
-				if((block[i].x == x || block[i].x + 1 == x ||
-							block[i].x == x + 1 || block[i].x + 1 == x + 1))
+		if(block[i].life == 1 && block[i].y == y)
+				if((block[i].x == x || block[i].x == x - 1 ||
+					block[i].x == x + 1 || block[i].x + 1 == x + 1))
 				{
 					move(block[i].y, block[i].x);
 					addstr(blank);
+
 					block[i].life = 0;
 					block_count++;
 					ball.direct = block_status[ball.direct];
+
 					count++;
 				}
 
@@ -1234,8 +1242,7 @@ int search(int end, int x, int y)
 
 	for(i = 0; i < end; i++)
 		if(block[i].y == y)
-			if(block[i].x == x || (block[i].x + 1) == x ||
-					block[i].x == x + 1 || (block[i].x + 1) == x + 1)
+			if(block[i].x == x || (block[i].x + 1) == x || block[i].x == x + 1)
 				return 1;
 
 	return 0;
@@ -1245,7 +1252,7 @@ void init_block(int count)
 {
 	int x, y, i;
 
-	srand((unsigned int)time(NULL));
+	srand((long)time(NULL));
 
 	for(i = 0; i < count; i++)
 	{
@@ -1350,15 +1357,6 @@ void game_rule(void)
 
 	move(15, 20);
 	addstr("---------------------------------------");
-
-	/*move(LINES/2, COLS/2-40);
-	  addstr(" 이 게임은 공을 튀기어 벽돌을 깨는 프로그램입니다");
-	  move(LINES/2+1, COLS/2-40);
-	  addstr("a: 막대 왼쪽으로 / s: 막대 오른쪽으로");
-	  move(LINES/2+2, COLS/2-40);
-	  addstr("h : 공잡기 / j : 왼쪽 대각선으로 / k : 위로 / l : 오른쪽 대각선으로");
-	  move(LINES/2+3, COLS/2-40);
-	  addstr("기회는 총 3번이며 왼쪽 아래 하트로 남은 시도 횟수가 표시됩니다.");*/
 
 	move(22, 36);
 	standout();

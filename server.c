@@ -65,13 +65,6 @@ int main()
 		}
 		else if(num == 1)
 		{
-			/*fseek(f2, 0, SEEK_END);
-			size2 = ftell(f2);
-
-			buf2 = malloc(size2 + 1);
-			memset(buf2, 0, size2 + 1);
-
-			fseek(f2,*/
 			f2 = fopen("1.txt", "a+");
 
 			recv(nsock_id, recv_buf, sizeof(recv_buf), 0);
